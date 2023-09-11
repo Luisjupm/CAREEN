@@ -11,11 +11,15 @@ import cccorelib
 import pycc
 import colorsys
 
- 
+# DEFINE A CLASS FOR THE WINDOW (IT HAS ANOTHER POP-UP WINDOWS)
 class App(tk.Tk):
     def P2p_getdata (pc,nan_value=False,sc=True):
-        ## CREATE A DATAFRAME WITH THE POINTS OF THE PC
+    ## CREATE A DATAFRAME WITH THE POINTS OF THE PC
        pcd = pd.DataFrame(pc.points(), columns=['X', 'Y', 'Z'])
+       ## GET THE RGB COLORS
+       pcd['R']=pc.colors()[:,0]
+       pcd['G']=pc.colors()[:,1] 
+       pcd['B']=pc.colors()[:,2] 
        if (sc==True):       
        ## ADD SCALAR FIELD TO THE DATAFRAME
            for i in range(pc.getNumberOfScalarFields()):
@@ -70,44 +74,57 @@ class App(tk.Tk):
     
  
     def __init__(self):
-        CC = pycc.GetInstance()  
+        CC = pycc.GetInstance()
+        
         
         super().__init__()
         self.title("Color maps")
-        
-        # Variables de control para las opciones
+        # Disable resizing the window
+        self.resizable(False, False)
+        # Remove minimize and maximize buttons (title bar only shows close button)
+        self.attributes('-toolwindow', 1)
+        # Create a frame for the form
+        form_frame = tk.Frame(self, padx=10, pady=10)
+        form_frame.pack()
+
+        # Control variables
         self.algorithm1_var = tk.BooleanVar()
         self.algorithm2_var = tk.BooleanVar()
         self.algorithm3_var = tk.BooleanVar()
         self.algorithm4_var = tk.BooleanVar()
 
-        # Etiquetas de los algoritmos
-        self.algorithm1_label = tk.Label(self, text="HSV (Hue-Saturation-Value")
-        self.algorithm2_label = tk.Label(self, text="YCbCr")
-        self.algorithm3_label = tk.Label(self, text="YIQ")
-        self.algorithm4_label = tk.Label(self, text="YUV")
-        # Casillas de verificación
-        self.algorithm1_checkbox = tk.Checkbutton(self, variable=self.algorithm1_var)
-        self.algorithm2_checkbox = tk.Checkbutton(self, variable=self.algorithm2_var)
-        self.algorithm3_checkbox = tk.Checkbutton(self, variable=self.algorithm3_var)
-        self.algorithm4_checkbox = tk.Checkbutton(self, variable=self.algorithm4_var)
-        # Botón de ejecución
-        self.run_button = tk.Button(self, text="OK", command=self.run_algorithms)
-        self.cancel_button = tk.Button(self, text="Cancel", command=self.destroy)
+        # Labels
+        self.algorithm1_label = tk.Label(form_frame, text="HSV (Hue-Saturation-Value")
+        self.algorithm1_label.grid(row=0, column=0, sticky="w",pady=2)
+       
+        self.algorithm2_label = tk.Label(form_frame, text="YCbCr")
+        self.algorithm2_label.grid(row=1, column=0, sticky="w",pady=2)
+       
+        self.algorithm3_label = tk.Label(form_frame, text="YIQ")
+        self.algorithm3_label.grid(row=2, column=0, sticky="w",pady=2) 
+        
+        self.algorithm4_label = tk.Label(form_frame, text="YUV")
+        self.algorithm4_label.grid(row=3, column=0, sticky="w",pady=2)
+        
+        # Checkboxes
+        self.algorithm1_checkbox = tk.Checkbutton(form_frame, variable=self.algorithm1_var)
+        self.algorithm1_checkbox.grid(row=0, column=1, sticky="e")
+        
+        self.algorithm2_checkbox = tk.Checkbutton(form_frame, variable=self.algorithm2_var)
+        self.algorithm2_checkbox.grid(row=1, column=1, sticky="e")       
+        
+        self.algorithm3_checkbox = tk.Checkbutton(form_frame, variable=self.algorithm3_var)
+        self.algorithm3_checkbox.grid(row=2, column=1, sticky="e")       
+        
+        self.algorithm4_checkbox = tk.Checkbutton(form_frame, variable=self.algorithm4_var)
+        self.algorithm4_checkbox.grid(row=3, column=1, sticky="e")        
+        
+        # Buttons       
+        self.run_button = tk.Button(form_frame, text="        OK        ", command=self.run_algorithms)
+        self.cancel_button = tk.Button(form_frame, text="     Cancel     ", command=self.destroy)
+        self.run_button.grid(row=4, column=0, sticky="e",padx=10)
+        self.cancel_button.grid(row=4, column=1, sticky="w")        
 
-        # Posicionamiento de los elementos en la ventana
-        self.algorithm1_label.grid(row=0, column=0, sticky=tk.W, padx=10)
-        self.algorithm2_label.grid(row=1, column=0, sticky=tk.W, padx=10)
-        self.algorithm3_label.grid(row=2, column=0, sticky=tk.W, padx=10)
-        self.algorithm4_label.grid(row=3, column=0, sticky=tk.W, padx=10)
-        
-        self.algorithm1_checkbox.grid(row=0, column=1)
-        self.algorithm2_checkbox.grid(row=1, column=1)
-        self.algorithm3_checkbox.grid(row=2, column=1)
-        self.algorithm4_checkbox.grid(row=3, column=1)
-        
-        self.run_button.grid(row=4, column=0, pady=10)
-        self.cancel_button.grid(row=4, column=1, pady=10)
         
     def run_algorithms(self):
         selected_algorithms = []

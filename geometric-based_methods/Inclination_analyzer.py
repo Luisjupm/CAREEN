@@ -15,16 +15,19 @@ import pandas as pd
 import numpy as np
 
 
-import scipy.spatial
 from scipy.spatial import ConvexHull
-from scipy import optimize
 from scipy.stats import linregress
 import math
 import cv2
 import matplotlib.pyplot as plt
+
 def P2p_getdata (pc,nan_value=False,sc=True):
-    ## CREATE A DATAFRAME WITH THE POINTS OF THE PC
+## CREATE A DATAFRAME WITH THE POINTS OF THE PC
    pcd = pd.DataFrame(pc.points(), columns=['X', 'Y', 'Z'])
+   ## GET THE RGB COLORS
+   pcd['R']=pc.colors()[:,0]
+   pcd['G']=pc.colors()[:,1] 
+   pcd['B']=pc.colors()[:,2] 
    if (sc==True):       
    ## ADD SCALAR FIELD TO THE DATAFRAME
        for i in range(pc.getNumberOfScalarFields()):
@@ -34,7 +37,7 @@ def P2p_getdata (pc,nan_value=False,sc=True):
    ## DELETE NAN VALUES
    if (nan_value==True):
        pcd.dropna(inplace=True)
-   return pcd
+   return pcd 
 def select_path():
     # Abrir el diálogo para seleccionar la ruta de guardado
     path = filedialog.askdirectory()

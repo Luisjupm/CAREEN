@@ -1,0 +1,3 @@
+CloudCompare_v2.13.beta_setup_x64
+CloudCompare-PythonPlugin-Setup-English-Python9-Venv
+
