@@ -312,35 +312,33 @@ save_path_label = tk.Label(form_frame, text="Path for saving the data:")
 save_path_label.grid(row=4, column=0, sticky="w",pady=2)
 
 # Entries
-entry_tolerance = tk.Entry(form_frame)
-entry_tolerance.grid(row=0, column=1, sticky="w",pady=2)
+entry_tolerance = tk.Entry(form_frame,width=5)
+entry_tolerance.grid(row=0, column=1, sticky="e",pady=2)
 entry_tolerance.insert(0,0.02)
 
-entry_step = tk.Entry(form_frame)
-entry_step.grid(row=1,column=1, sticky="w",pady=2)
+entry_step = tk.Entry(form_frame,width=5)
+entry_step.grid(row=1,column=1, sticky="e",pady=2)
 entry_step.insert(0,0.5)
 
-entry_maximum_inclination = tk.Entry(form_frame)
-entry_maximum_inclination.grid(row=2,column=1, sticky="w",pady=2)
+entry_maximum_inclination = tk.Entry(form_frame,width=5)
+entry_maximum_inclination.grid(row=2,column=1, sticky="e",pady=2)
 entry_maximum_inclination.insert(0,2)
 
-save_path_textbox = tk.Entry(form_frame)
-save_path_textbox.grid(row=4,column=1, sticky="w",pady=2)
+save_path_textbox = tk.Entry(form_frame,width=30)
+save_path_textbox.grid(row=4,column=1, sticky="e",pady=2)
 
 algorithms = ["Points","Convex Hull", "Rectangle fitting", "Circle fitting"]
-combo_type = ttk.Combobox(form_frame, values=algorithms, state="readonly")
+combo_type = ttk.Combobox(form_frame, values=algorithms, state="readonly",width=15)
 combo_type.current(0)
-combo_type.grid(row=3, column=1, sticky="w",pady=2)
+combo_type.grid(row=3, column=1, sticky="e",pady=2)
 
-save_path_button = tk.Button(form_frame, text="...", command=select_path)
-save_path_button.grid(row=4, column=2, sticky="e",pady=2)
+save_path_button = tk.Button(form_frame, text="...", command=select_path,width=2)
+save_path_button.grid(row=4, column=1, sticky="e",pady=2)
 
-run_button = tk.Button(form_frame, text="        OK        ", command=run_algorithm)
-cancel_button = tk.Button(form_frame, text="     Cancel     ", command=destroy)
-dummie_label = tk.Label(form_frame, text="")
-dummie_label.grid(row=5, column=0, sticky="w",pady=2)
-run_button.grid(row=6, column=1, sticky="e",padx=10)
-cancel_button.grid(row=6, column=2, sticky="w")
+run_button = tk.Button(form_frame, text="OK", command=run_algorithm,width=10)
+cancel_button = tk.Button(form_frame, text="Cancel", command=destroy,width=10)
+run_button.grid(row=6, column=1, sticky="e",padx=100)
+cancel_button.grid(row=6, column=1, sticky="e")
 
 
 

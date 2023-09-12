@@ -19,6 +19,19 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from tkinter import ttk
 from tkinter import filedialog
+import os
+import sys
+
+# ADDING THE MAIN MODULE FOR ADDITIONAL FUNCTIONS
+
+script_directory = os.path.abspath(__file__)
+path_parts = script_directory.split(os.path.sep)
+
+additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\main_module'
+print (additional_modules_directory)
+sys.path.insert(0, additional_modules_directory)
+from main import P2p_getdata,get_istance
+
 
 def minBoundingRect(hull_points_2d):
     #print "Input convex hull points: "
@@ -83,10 +96,7 @@ def minBoundingRect(hull_points_2d):
     # Re-create rotation matrix for smallest rect
     angle = min_bbox[0]   
     R = np.array([ [ np.math.cos(angle), np.math.cos(angle-(np.math.pi/2)) ], [ np.math.cos(angle+(np.math.pi/2)), np.math.cos(angle) ] ])
-    #print "Projection matrix: \n", R
 
-    # Project convex hull points onto rotated frame
-    proj_points = np.dot(R, np.transpose(hull_points_2d) ) # 2x2 * 2xn
     #print "Project hull points are \n", proj_points
 
     # min/max x,y points are against baseline
@@ -181,24 +191,6 @@ def rotate_point_cloud_3d(point_cloud, angle_deg):
     
     return rotated_point_cloud
 
-    
-
-def P2p_getdata (pc,nan_value=False,sc=True):
-    ## CREATE A DATAFRAME WITH THE POINTS OF THE PC
-   pcd = pd.DataFrame(pc.points(), columns=['X', 'Y', 'Z'])
-   if (sc==True):       
-   ## ADD SCALAR FIELD TO THE DATAFRAME
-       for i in range(pc.getNumberOfScalarFields()):
-           scalarFieldName = pc.getScalarFieldName(i)  
-           scalarField = pc.getScalarField(i).asArray()[:]              
-           pcd.insert(len(pcd.columns), scalarFieldName, scalarField) 
-   ## DELETE NAN VALUES
-   if (nan_value==True):
-       pcd.dropna(inplace=True)
-   return pcd 
-
-
-
 def select_path():
     # Abrir el diálogo para seleccionar la ruta de guardado
     path = filedialog.askdirectory()
@@ -213,23 +205,23 @@ def run_algorithm():
     Degree=int(entry_degree.get())
     cal_type=str(combo_type.get())
     
+    type_data, number = get_istance()
+    if type_data=='point_cloud':
+        raise RuntimeError("Please select the folder that contains the point clouds")          
     ## EXTRACT THE NUMBER OF CLOUDS IN THE SELECTED FOLDER
     CC = pycc.GetInstance() 
-    if not CC.haveSelection():
-        raise RuntimeError("No folder selected")
-    else:
-        entities = CC.getSelectedEntities()[0]
-        number = entities.getChildrenNumber()
-    
     if number==0:
         raise RuntimeError("There are not entities in the folder")
     else:
+        entities = CC.getSelectedEntities()[0]
+        number = entities.getChildrenNumber()
+
     ## CREATE A EMPTY VARIABLE FOR STORING RESULTS
         data = []
     ## LOOP OVER EACH ELEMENT
         for i in range(number):
             pc = entities.getChild(i)
-            pcd=P2p_getdata(pc,False,True)
+            pcd=P2p_getdata(pc,False,True,True)
             pcd_f,skeleton =extract_points_within_tolerance(pcd[['X','Y','Z']].values, Tolerance,True)
             
             # FIT TO A POLINOMIAL CURVE
@@ -349,57 +341,71 @@ def destroy():
 window = tk.Tk()
 
 window.title("Deflection analyzer")
+# Disable resizing the window
+window.resizable(False, False)
+# Remove minimize and maximize buttons (title bar only shows close button)
+window.attributes('-toolwindow', 1)
+
+# Create a frame for the form
+form_frame = tk.Frame(window, padx=10, pady=10)
+form_frame.pack()
 
 # Variables de control para las opciones
 checkbox1_var = tk.BooleanVar()
 
-# Etiquetas de los algoritmos
-label_tolerance = tk.Label(window, text="Thickness threshold:")
-label_degree=tk.Label(window, text="Polinomic degree:")
-label_relative_deflection = tk.Label(window, text="Maximum relative deflection (L/300; L/500):")
-label_type = tk.Label(window, text="Type of input for the scalar field")
-checkbox1_label = tk.Label(window, text="Load the points of the main axis")
-save_path_label = tk.Label(window, text="Path for saving the data:")
+# Labels for the algorithms
+label_tolerance = tk.Label(form_frame, text="Thickness threshold:")
+label_tolerance.grid(row=0, column=0, sticky="w",pady=2)
+
+label_degree=tk.Label(form_frame, text="Polinomic degree:")
+label_degree.grid(row=1, column=0, sticky="w",pady=2)
+
+label_relative_deflection = tk.Label(form_frame, text="Maximum relative deflection (L/300; L/500):")
+label_relative_deflection.grid(row=2, column=0, sticky="w",pady=2)
+
+label_type = tk.Label(form_frame, text="Type of input for the scalar field")
+label_type.grid(row=3, column=0, sticky="w",pady=2)
+
+checkbox1_label = tk.Label(form_frame, text="Load the points of the main axis")
+checkbox1_label.grid (row=4, column=0, sticky="w",pady=2)
+
+checkbox_1 = tk.Checkbutton(form_frame, variable=checkbox1_var)
+checkbox_1.grid (row=4, column=1, sticky="e",pady=2)
+
+save_path_label = tk.Label(form_frame, text="Path for saving the data:")
+save_path_label.grid(row=5, column=0, sticky="w",pady=2)
 
 
 # Entries
-entry_tolerance = tk.Entry(window)
+entry_tolerance = tk.Entry(form_frame,width=5)
 entry_tolerance.insert(0,0.02)
+entry_tolerance.grid(row=0, column=1, sticky="e",pady=2)
 
-entry_degree = tk.Entry(window)
+entry_degree = tk.Entry(form_frame,width=5)
 entry_degree.insert(0,4)
+entry_degree.grid(row=1,column=1, sticky="e",pady=2)
 
-entry_relative_deflection = tk.Entry(window)
+entry_relative_deflection = tk.Entry(form_frame,width=5)
 entry_relative_deflection.insert(0,300)
+entry_relative_deflection.grid(row=2, column=1, sticky="e",pady=2)
 
-save_path_textbox = tk.Entry(window)
+save_path_textbox = tk.Entry(form_frame,width=30)
+save_path_textbox.grid(row=5,column=1, sticky="e",pady=2)
 
 algorithms = ["Data", "Fit"]
-combo_type = ttk.Combobox(window, values=algorithms, state="readonly")
+combo_type = ttk.Combobox(form_frame, values=algorithms, state="readonly")
 combo_type.current(0)
-checkbox_1 = tk.Checkbutton(window, variable=checkbox1_var)
-save_path_button = tk.Button(window, text="...", command=select_path)
-run_button = tk.Button(window, text="OK", command=run_algorithm)
-cancel_button = tk.Button(window, text="Cancel", command=destroy)
+combo_type.grid(row=3, column=1, sticky="e",pady=2)
 
-# Location
-label_tolerance.grid(row=0, column=0, sticky=tk.W)
-entry_tolerance.grid(row=0, column=1, sticky=tk.W)
-label_degree.grid(row=1, column=0, sticky=tk.W)
-entry_degree.grid(row=1,column=1, sticky=tk.W)
-label_relative_deflection.grid(row=2, column=0, sticky=tk.W)
-entry_relative_deflection.grid(row=2, column=1, sticky=tk.W)
-label_type.grid(row=3, column=0, sticky=tk.W)
-combo_type.grid(row=3, column=1, sticky=tk.W)
 
-checkbox1_label.grid (row=4, column=0, sticky=tk.W)
-checkbox_1.grid (row=4, column=1, sticky=tk.W)
-save_path_label.grid(row=5, column=0, sticky=tk.W)
-save_path_textbox.grid(row=5, column=1, sticky=tk.W)
-save_path_button.grid(row=5, column=2, sticky=tk.W)
-run_button.grid(row=6, column=0, sticky=tk.W)
-cancel_button.grid(row=6, column=1, sticky=tk.W)
 
+save_path_button = tk.Button(form_frame, text="...", command=select_path,width=2)
+save_path_button.grid(row=5, column=1, sticky="e",pady=2)
+
+run_button = tk.Button(form_frame, text="OK", command=run_algorithm,width=10)
+cancel_button = tk.Button(form_frame, text="Cancel", command=destroy,width=10)
+run_button.grid(row=6, column=1, sticky="e",padx=100)
+cancel_button.grid(row=6, column=1, sticky="e")
 
 
 

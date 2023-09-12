@@ -1,0 +1,2 @@
+Identifier	Length	Deflection from point data	Deflection from polynomial data	Distance to maximum deflection point from point data	Distance to maximum deflection point from polynomial data	Inflection points (vertical coordinates)	Inflection points (horizontal coordinates)	Relative deflection from point data	Relative deflection from polynomial data	Is within the relative deflection tolerante?
+Beam_0	1.179	1.684	0.928	0.735	0.643	[768.779394615236]	[-6.99146909]	1.429	0.787	False

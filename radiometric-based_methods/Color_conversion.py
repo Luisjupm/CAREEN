@@ -142,10 +142,10 @@ class App(tk.Tk):
         self.algorithm4_checkbox.grid(row=3, column=1, sticky="e")        
         
         # Buttons       
-        self.run_button = tk.Button(form_frame, text="        OK        ", command=self.run_algorithms)
-        self.cancel_button = tk.Button(form_frame, text="     Cancel     ", command=self.destroy)
-        self.run_button.grid(row=4, column=0, sticky="e",padx=10)
-        self.cancel_button.grid(row=4, column=1, sticky="w")        
+        self.run_button = tk.Button(form_frame, text="OK", command=self.run_algorithms,width=10)
+        self.cancel_button = tk.Button(form_frame, text="Cancel", command=self.destroy,width=10)
+        self.run_button.grid(row=4, column=1, sticky="e",padx=100)
+        self.cancel_button.grid(row=4, column=1, sticky="e")        
 
         
     def run_algorithms(self):
