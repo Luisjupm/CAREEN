@@ -10,26 +10,24 @@ import pandas as pd
 import cccorelib
 import pycc
 import colorsys
+import os
+import sys
+
+# ADDING THE MAIN MODULE FOR ADDITIONAL FUNCTIONS
+
+script_directory = os.path.abspath(__file__)
+path_parts = script_directory.split(os.path.sep)
+
+additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\main_module'
+print (additional_modules_directory)
+sys.path.insert(0, additional_modules_directory)
+from main import P2p_getdata,get_istance
+
+
 
 # DEFINE A CLASS FOR THE WINDOW (IT HAS ANOTHER POP-UP WINDOWS)
 class App(tk.Tk):
-    def P2p_getdata (pc,nan_value=False,sc=True):
-    ## CREATE A DATAFRAME WITH THE POINTS OF THE PC
-       pcd = pd.DataFrame(pc.points(), columns=['X', 'Y', 'Z'])
-       ## GET THE RGB COLORS
-       pcd['R']=pc.colors()[:,0]
-       pcd['G']=pc.colors()[:,1] 
-       pcd['B']=pc.colors()[:,2] 
-       if (sc==True):       
-       ## ADD SCALAR FIELD TO THE DATAFRAME
-           for i in range(pc.getNumberOfScalarFields()):
-               scalarFieldName = pc.getScalarFieldName(i)  
-               scalarField = pc.getScalarField(i).asArray()[:]              
-               pcd.insert(len(pcd.columns), scalarFieldName, scalarField) 
-       ## DELETE NAN VALUES
-       if (nan_value==True):
-           pcd.dropna(inplace=True)
-       return pcd  
+
    
     # Convert RGB to HSV function
     def rgb_to_hsv(self,row):
@@ -61,21 +59,45 @@ class App(tk.Tk):
         u = -0.147 * r - 0.289 * g + 0.436 * b
         v = 0.615 * r - 0.515 * g - 0.100 * b
         return pd.Series([y, u, v])
-   
-    ## LOAD THE SELECTED POINT CLOUD
-    CC = pycc.GetInstance() 
-    entities = CC.getSelectedEntities()
-    print(f"Selected entities: {entities}")
-    if not entities:
-        raise RuntimeError("No entities selected")
-    else:
-        pc = entities[0]
-        pcd=P2p_getdata(pc,False,True)
-    
- 
+    # Create Scalar fields for the different color functions
+    def color_conversion (self,selected_algorithms,pc,pcd):
+         for algorithm in selected_algorithms:
+             print(f"Coverting to: {algorithm}")
+             if algorithm == 'HSV':
+                 ## ADD YCBCR TO THE DATAFRAME
+                 pcd[['H(HSV)', 'S(HSV)', 'V(HSV)']] = pcd.apply(self.rgb_to_hsv, axis=1)
+                 ## ADD HSV AS SCALAR FIELDS
+                 pc.addScalarField("H(HSV)", pcd['H(HSV)'])
+                 pc.addScalarField("S(HSV)", pcd['S(HSV)'])
+                 pc.addScalarField("V(HSV)", pcd['V(HSV)'])
+             elif algorithm == 'YCbCr':            
+                 ## ADD YCBCR TO THE DATAFRAME
+                 pcd[['Y(YCbCr)', 'Cb(YCbCr)', 'Cr(YCbCr)']] = pcd.apply(self.rgb_to_ycbcr, axis=1)
+                 ## ADD HSV AS SCALAR FIELDS
+                 pc.addScalarField("Y(YCbCr)", pcd['Y(YCbCr)'])
+                 pc.addScalarField("Cb(YCbCr)", pcd['Cb(YCbCr)'])
+                 pc.addScalarField("Cr(YCbCr)", pcd['Cr(YCbCr)'])   
+             elif algorithm == 'YIQ': 
+                 ## ADD YIQ TO THE DATAFRAME
+                 pcd[['Y(YIQ)', 'I(YIQ)', 'Q(YIQ)']] = pcd.apply(self.rgb_to_yiq, axis=1)
+                 ## ADD HSV AS SCALAR FIELDS
+                 pc.addScalarField("Y(YIQ)", pcd['Y(YIQ)'])
+                 pc.addScalarField("I(YIQ)", pcd['I(YIQ)'])
+                 pc.addScalarField("Q(YIQ)", pcd['Q(YIQ)'])   
+             elif algorithm == 'YUV': 
+             ## ADD YUV TO THE DATAFRAME
+                 pcd[['Y(YUV)', 'U(YUV)', 'V(YUV)']] = pcd.apply(self.rgb_to_yuv, axis=1)
+                 ## ADD HSV AS SCALAR FIELDS
+                 pc.addScalarField("Y(YUV)", pcd['Y(YUV)'])
+                 pc.addScalarField("U(YUV)", pcd['U(YUV)'])
+                 pc.addScalarField("V(YUV)", pcd['V(YUV)'])  
     def __init__(self):
-        CC = pycc.GetInstance()
         
+        ## CONTROL THE SELECTION OF THE INPUT
+        CC = pycc.GetInstance() 
+        if not CC.haveSelection():
+            raise RuntimeError("No folder or point cloud has been selected")
+      
         
         super().__init__()
         self.title("Color maps")
@@ -128,7 +150,8 @@ class App(tk.Tk):
         
     def run_algorithms(self):
         selected_algorithms = []
-        
+       
+     
         if self.algorithm1_var.get():
             selected_algorithms.append("HSV")
         
@@ -140,40 +163,27 @@ class App(tk.Tk):
             
         if self.algorithm4_var.get():
             selected_algorithms.append("YUV") 
-            
-        # Aquí puedes ejecutar los algoritmos seleccionados
-        for algorithm in selected_algorithms:
-            print(f"Coverting to: {algorithm}")
-            if algorithm == 'HSV':
-                ## ADD HSV TO THE DATAFRAME
-                self.pcd[['H(HSV)', 'S(HSV)', 'V(HSV)']] = self.pcd.apply(self.rgb_to_hsv, axis=1)
-                ## ADD HSV AS SCALAR FIELDS
-                self.pc.addScalarField("H(HSV)", self.pcd['H(HSV)'])
-                self.pc.addScalarField("S(HSV)", self.pcd['S(HSV)'])
-                self.pc.addScalarField("V(HSV)", self.pcd['V(HSV)'])
-            elif algorithm == 'YCbCr':            
-                ## ADD YCBCR TO THE DATAFRAME
-                self.pcd[['Y(YCbCr)', 'Cb(YCbCr)', 'Cr(YCbCr)']] = self.pcd.apply(self.rgb_to_ycbcr, axis=1)
-                ## ADD HSV AS SCALAR FIELDS
-                self.pc.addScalarField("Y(YCbCr)", self.pcd['Y(YCbCr)'])
-                self.pc.addScalarField("Cb(YCbCr)", self.pcd['Cb(YCbCr)'])
-                self.pc.addScalarField("Cr(YCbCr)", self.pcd['Cr(YCbCr)'])   
-            elif algorithm == 'YIQ': 
-                ## ADD YIQ TO THE DATAFRAME
-                self.pcd[['Y(YIQ)', 'I(YIQ)', 'Q(YIQ)']] = self.pcd.apply(self.rgb_to_yiq, axis=1)
-                ## ADD HSV AS SCALAR FIELDS
-                self.pc.addScalarField("Y(YIQ)", self.pcd['Y(YIQ)'])
-                self.pc.addScalarField("I(YIQ)", self.pcd['I(YIQ)'])
-                self.pc.addScalarField("Q(YIQ)", self.pcd['Q(YIQ)'])   
-            elif algorithm == 'YUV': 
-            ## ADD YUV TO THE DATAFRAME
-                self.pcd[['Y(YUV)', 'U(YUV)', 'V(YUV)']] = self.pcd.apply(self.rgb_to_yuv, axis=1)
-                ## ADD HSV AS SCALAR FIELDS
-                self.pc.addScalarField("Y(YUV)", self.pcd['Y(YUV)'])
-                self.pc.addScalarField("U(YUV)", self.pcd['U(YUV)'])
-                self.pc.addScalarField("V(YUV)", self.pcd['V(YUV)']) 
-        self.CC.addToDB(self.pc)
-        self.CC.updateUI() 
+       #Get data
+        CC = pycc.GetInstance()  
+        type_data, number= get_istance()
+        if type_data=='folder':
+           entities = CC.getSelectedEntities()[0]
+           ## LOOP OVER EACH ELEMENT
+           for i in range(number):
+               pc = entities.getChild(i)  
+               pcd=P2p_getdata(pc,False, True, True) 
+               self.color_conversion(selected_algorithms,pc,pcd)  
+               CC.addToDB(pc)
+               CC.updateUI() 
+        elif type_data=='point_cloud':
+           entities = CC.getSelectedEntities()
+           pc = entities[0]
+           pcd=P2p_getdata(pc,False, True, True)
+           self.color_conversion(selected_algorithms,pc,pcd)
+           CC.addToDB(pc)
+           CC.updateUI()            
+
+
         print('The color scales has been added to the scalar fields of the point cloud')  
         self.destroy()  # Close the window
         

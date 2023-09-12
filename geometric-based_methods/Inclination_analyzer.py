@@ -20,32 +20,28 @@ from scipy.stats import linregress
 import math
 import cv2
 import matplotlib.pyplot as plt
+import os
+import sys
 
-def P2p_getdata (pc,nan_value=False,sc=True):
-## CREATE A DATAFRAME WITH THE POINTS OF THE PC
-   pcd = pd.DataFrame(pc.points(), columns=['X', 'Y', 'Z'])
-   ## GET THE RGB COLORS
-   pcd['R']=pc.colors()[:,0]
-   pcd['G']=pc.colors()[:,1] 
-   pcd['B']=pc.colors()[:,2] 
-   if (sc==True):       
-   ## ADD SCALAR FIELD TO THE DATAFRAME
-       for i in range(pc.getNumberOfScalarFields()):
-           scalarFieldName = pc.getScalarFieldName(i)  
-           scalarField = pc.getScalarField(i).asArray()[:]              
-           pcd.insert(len(pcd.columns), scalarFieldName, scalarField) 
-   ## DELETE NAN VALUES
-   if (nan_value==True):
-       pcd.dropna(inplace=True)
-   return pcd 
+# ADDING THE MAIN MODULE FOR ADDITIONAL FUNCTIONS
+
+script_directory = os.path.abspath(__file__)
+path_parts = script_directory.split(os.path.sep)
+
+additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\main_module'
+print (additional_modules_directory)
+sys.path.insert(0, additional_modules_directory)
+from main import P2p_getdata,get_istance
+
 def select_path():
-    # Abrir el diálogo para seleccionar la ruta de guardado
+   
     path = filedialog.askdirectory()
     
-    # Mostrar la ruta seleccionada en el textbox correspondiente
+
     save_path_textbox.delete(0, tk.END)
     save_path_textbox.insert(0, path)
-# Calculate the area using the shoelace formula
+    
+
 def calculate_polygon_area(points):
     n = len(points)
     area = 0
@@ -55,6 +51,7 @@ def calculate_polygon_area(points):
         area += (x1 * y2 - x2 * y1)
     area = abs(area) / 2
     return area
+
 def run_algorithm():
     ## STORE THE INPUT VARIABLES
     Tolerance=float(entry_tolerance.get())
@@ -62,26 +59,23 @@ def run_algorithm():
     cal_type=str(combo_type.get())    
     limit=float (entry_maximum_inclination.get())
     
+    type_data, number = get_istance()
+    
+    if type_data=='point_cloud':
+        raise RuntimeError("Please select the folder that contains the point clouds")          
     ## EXTRACT THE NUMBER OF CLOUDS IN THE SELECTED FOLDER
     CC = pycc.GetInstance() 
-    if not CC.haveSelection():
-        raise RuntimeError("No folder selected")
-    else:
-        entities = CC.getSelectedEntities()[0]
-        number = entities.getChildrenNumber()
-        if hasattr(entities, 'points'):
-            raise RuntimeError("Please select the folder that contains the point clouds")        
-        
     if number==0:
         raise RuntimeError("There are not entities in the folder")
     else:
-
+        entities = CC.getSelectedEntities()[0]
+        number = entities.getChildrenNumber()
     ## CREATE A EMPTY VARIABLE FOR STORING RESULTS
         data = []
     ## LOOP OVER EACH ELEMENT
         for i in range(number):
             pc = entities.getChild(i)
-            pcd=P2p_getdata(pc,False,True)
+            pcd=P2p_getdata(pc,False, True, True) 
     ## LOOP WITHIN EACH ELEMENT FOR EXTRACTING THE SECTIONS
             j=Step
             # Create an empty list to store the data
@@ -300,7 +294,7 @@ window.attributes('-toolwindow', 1)
 form_frame = tk.Frame(window, padx=10, pady=10)
 form_frame.pack()
 
-# Etiquetas de los algoritmos
+# Labels for the algorithms
 label_tolerance = tk.Label(form_frame, text="Thickness threshold:")
 label_tolerance.grid(row=0, column=0, sticky="w",pady=2)
 

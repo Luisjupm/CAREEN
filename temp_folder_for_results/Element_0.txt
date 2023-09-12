@@ -1,0 +1,5 @@
+Height	Centroid along x-axis	Centroid along y-axis	Area
+768.0	9.246	15.993	2.127
+768.5	9.358	16.001	2.697
+769.0	9.367	16.010	2.709
+769.5	9.357	16.008	2.805
