@@ -46,4 +46,39 @@ def get_istance ():
 
     return type_data,number
 
-        
+def get_point_clouds ():
+    CC = pycc.GetInstance() 
+    #CHECKING THE FOLDER
+    if not CC.haveSelection():
+        raise RuntimeError("You need to select a folder or a point cloud")
+    else:            
+        entities = CC.getSelectedEntities()[0]        
+    if hasattr(entities, 'points'):
+        type_data='point_cloud'
+        number=1
+    else:
+        type_data='folder'
+        number = entities.getChildrenNumber()   
+
+    return type_data,number  
+  
+def get_point_clouds_name ():
+    CC = pycc.GetInstance() 
+    name_list = []  # Create an empty list to store names
+    #CHECKING THE FOLDER
+    if not CC.haveSelection():
+        raise RuntimeError("You need to select a folder or a point cloud")
+    else:            
+        entities = CC.getSelectedEntities()[0]
+            
+    if hasattr(entities, 'points'):
+        type_data='point_cloud'
+        name_list= entities.getName()
+        number=1
+    else:
+        type_data='folder'
+        number = entities.getChildrenNumber()   
+        for i in range (number):
+            new_name=entities.getChild(i).getName()
+            name_list.append(new_name)           
+    return name_list    
