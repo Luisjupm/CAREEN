@@ -2,7 +2,7 @@
 """
 Created on Wed Jun 21 18:00:57 2023
 
-@author: Luisja
+@author: Luisjaa
 """
 import tkinter as tk
 
