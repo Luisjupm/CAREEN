@@ -120,7 +120,10 @@ def show_features_window ():
     canvas.bind_all("<MouseWheel>", _on_mousewheel)
    
     # Close the features window after selected
-    def close_features_window ():
+    def cancel_features_window ():
+        feature_window.destroy ()
+        
+    def ok_features_window ():
         if not features2include:
             print ("Please, check at least one feature")
         else:
@@ -142,8 +145,10 @@ def show_features_window ():
 
         feature_window.destroy ()
       
-    ok_button_features= tk.Button (features_frame, text="OK", command= close_features_window, width=10)
-    ok_button_features.pack (side= "right") 
+    ok_button_features= ttk.Button (features_frame, text="OK", command= ok_features_window, width=10)
+    ok_button_features.pack (side= "right")
+    cancel_button_features= ttk.Button (features_frame, text="Cancel", command= cancel_features_window, width=10)
+    cancel_button_features.pack (side= "right") 
     
     
 def on_checkbox_checked(checked_var, value):
@@ -286,19 +291,19 @@ tabControl.pack(expand=1, fill="both")
 #%% GUI TRAINING
 
 # Labels
-label_training=tk.Label (tab1, text="Point cloud for training")
+label_training=ttk.Label (tab1, text="Point cloud for training")
 label_training.grid (row=0,column=0,sticky="w",pady=2)
 
-label_testing=tk.Label (tab1, text="Point cloud for testing")
+label_testing=ttk.Label (tab1, text="Point cloud for testing")
 label_testing.grid (row=1,column=0,sticky="w",pady=2)
 
-label_features=tk.Label (tab1, text="Choose the features to include")
+label_features=ttk.Label (tab1, text="Choose the features to include")
 label_features.grid (row=2, column=0, sticky="w",pady=2)
 
-label_training=tk.Label (tab1, text="GPU comsumption")
+label_training=ttk.Label (tab1, text="GPU comsumption")
 label_training.grid (row=3,column=0,sticky="w",pady=2)
 
-label_testing=tk.Label (tab1, text="Number of iterations")
+label_testing=ttk.Label (tab1, text="Number of iterations")
 label_testing.grid (row=4,column=0,sticky="w",pady=2)
 
 # Combobox
@@ -311,21 +316,21 @@ combo_testing.grid (row=1,column=1,sticky="w",pady=2)
 combo_testing.set("Select the point cloud used for testing")
 
 # Entry
-entry_gpu=tk.Entry (tab1,width=5)
+entry_gpu=ttk.Entry (tab1,width=5)
 entry_gpu.insert (0,20000)
 entry_gpu.grid (row=3,column=1,sticky="e",pady=2) 
 
-entry_iterations=tk.Entry (tab1,width=5)
+entry_iterations=ttk.Entry (tab1,width=5)
 entry_iterations.insert (0,100)
 entry_iterations.grid (row=4,column=1,sticky="e",pady=2) 
 
 # Button
-run_button= tk.Button (tab1, text="OK", command=run_algorithm, width=10)
-cancel_button= tk.Button (tab1, text="Cancel", command=destroy,width=10)
+run_button= ttk.Button (tab1, text="OK", command=run_algorithm, width=10)
+cancel_button= ttk.Button (tab1, text="Cancel", command=destroy,width=10)
 run_button.grid (row=5,column=1,sticky="e",padx=100) 
 cancel_button.grid (row=5,column=1,sticky="e") 
 
-button_features= tk.Button (tab1, text="...", command=show_features_window, height=1, width=5)
+button_features= ttk.Button (tab1, text="...", command=show_features_window, width=10)
 button_features.grid(row=2,column=1,sticky="e",pady=2)
 
 
@@ -341,13 +346,13 @@ form_frame_2= tk.Frame (window_2, padx=4,pady=10)
 form_frame_2.pack()
 
 # Labels
-label_trained=tk.Label (tab2, text="Trained model")
+label_trained=ttk.Label (tab2, text="Trained model")
 label_trained.grid (row=0,column=0,sticky="w",pady=2)
 
-label_classify=tk.Label (tab2, text="Point cloud for classify")
+label_classify=ttk.Label (tab2, text="Point cloud for classify")
 label_classify.grid (row=1,column=0,sticky="w",pady=2)
 
-label_gpu=tk.Label (tab2, text="GPU consuption")
+label_gpu=ttk.Label (tab2, text="GPU comsuption")
 label_gpu.grid (row=2, column=0, sticky="w",pady=2)
 
 # Combobox
@@ -356,18 +361,19 @@ combo_classification.grid (row=1,column=1,sticky="e",pady=2)
 combo_classification.set("Select the point cloud used for classification")
 
 # Entry
-entry_gpu=tk.Entry (tab2,width=5)
+entry_gpu=ttk.Entry (tab2,width=5)
 entry_gpu.insert (0,20000)
 entry_gpu.grid (row=2,column=1,sticky="e",pady=2) 
 
 # Button
-run_button= tk.Button (tab2, text="OK", command=run_algorithm_2, width=10)
-cancel_button= tk.Button (tab2, text="Cancel", command=destroy,width=10)
+run_button= ttk.Button (tab2, text="OK", command=run_algorithm_2, width=10)
+cancel_button= ttk.Button (tab2, text="Cancel", command=destroy,width=10)
 run_button.grid (row=3,column=1,sticky="e",padx=100) 
 cancel_button.grid (row=3,column=1,sticky="e")
 
-button_trained_model= tk.Button (tab2, text="...", command=show_window, height=1, width=5)
+button_trained_model= ttk.Button (tab2, text="...", command=show_window, width=10)
 button_trained_model.grid(row=0,column=1,sticky="e",pady=2)
+
 
 # Start the main event loop
 root.mainloop()
