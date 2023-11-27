@@ -65,9 +65,24 @@ output_directory=os.path.join(current_directory,'..','temp_folder_for_results','
 processing_file_rf=os.path.join(current_directory,'random_forest-1.3.2\\random_forest-1.3.2.exe')
 processing_file_tpot=os.path.join(current_directory,'t_pot-0.12.1\\TPOT.exe')
 
+#Prediction
+processing_file_p=os.path.join(current_directory,'prediction_sklearn-1.3.2\\prediction_sklearn.exe')
+
 #%% FUNCTIONS FEATURE SELECTION
 def destroy ():
     root.destroy ()
+
+def open_file_pkl():
+    global path_pkl    
+    file_path = filedialog.askopenfilename(filetypes=[("Pickle files", "*.pkl")])
+    if file_path:
+        path_pkl = file_path
+        
+def open_file_feature():
+    global path_feature  
+    file_path = filedialog.askopenfilename(filetypes=[("Feature file", "*.txt")])
+    if file_path:
+        path_feature = file_path
 
 def choose_output_directory():
     output_directory = filedialog.askdirectory()
@@ -116,6 +131,7 @@ def select_directory():
         output_directory = directory
         entry_c.delete(0, tk.END)
         entry_c.insert(0, output_directory)
+
         
 def on_ok_button_click():
     selected_items = listbox.curselection()
@@ -143,6 +159,8 @@ def load_selection_from_file():
         for i in selected_indices:
             listbox.selection_set(i)
 load_selection_from_file()
+
+
 
 def execute_selected_function():
     selected_function = combo3.get()
@@ -535,22 +553,33 @@ def run_algorithm_2 ():
     
 def run_algorithm_3 ():
     
+  
+    classification_pc_name=combo4.get()
     CC= pycc.GetInstance()
     entities= CC.getSelectedEntities()[0]
-    
-    classification_pc_name=combo_pc.get()
     index=-1
     for i, item in enumerate (name_list):
         if item== classification_pc_name:
             pc_classification=entities.getChild(i)
             break  
     pcd_classification=P2p_getdata(pc_classification,False,True,True)
-    
+    f='features'
     # Save the point clouds
-    pcd_classification.to_csv(input_file,sep=' ',header=True,index=False)
+    pcd_classification.to_csv(os.path.join(output_directory, 'predictions.txt'),sep=' ',header=True,index=False)
+    command = processing_file_p + ' --i ' + os.path.join(output_directory, 'predictions.txt')+ ' --o ' + output_directory +  ' --f ' + path_feature + ' --p ' + path_pkl
+
+    # RUN THE COMMAND LINE
+    os.system(command) 
     
-    print("The process has been finished")
-    
+    data = pd.read_csv(os.path.join(output_directory, 'predictions.txt'), delimiter=',')  # Assumes comma-separated columns
+    # Create the resulting point cloud
+    pc_prediction = pycc.ccPointCloud(data['X'], data['Y'], data['Z'])
+    pc_prediction.setName("Results_from_prediction")
+    pc_prediction.addScalarField("Predictions", data['Predictions']) 
+    CC.addToDB(pc_prediction)
+    CC.updateUI()
+    print("The process has been finished")    
+   
 #%% INPUTS AT THE BEGINING
 name_list=get_point_clouds_name()
 type_data,number=get_istance()
@@ -708,26 +737,40 @@ output_button_b.grid(row=4,column=2,sticky="e",padx=100)
 # TAB PREDICTION
 
 # Labels
-Label_p1= ttk.Label(tab3, text="Load file")
+Label_p1= ttk.Label(tab3, text="Choose point cloud for prediction")
 Label_p1.grid(column=0, row=0, pady=2, sticky="w")
-Label_p2= ttk.Label(tab3, text="Choose output directory")
+Label_p2= ttk.Label(tab3, text="Load feature file")
 Label_p2.grid(column=0, row=1, pady=2, sticky="w")
+Label_p3= ttk.Label(tab3, text="Load pkl file")
+Label_p3.grid(column=0, row=2, pady=2, sticky="w")
+Label_p4= ttk.Label(tab3, text="Choose output directory")
+Label_p4.grid(column=0, row=3, pady=2, sticky="w")
+
+# Combobox
+combo4=ttk.Combobox (tab3,values=name_list)
+combo4.grid(column=1, row=0, sticky="e", pady=2)
+combo4.set("Select the point cloud used for prediction")
 
 # Entry
 entry_c = ttk.Entry(tab3, width=30)
-entry_c.grid(row=1, column=1, sticky="e", pady=2)
+entry_c.grid(row=3, column=1, sticky="e", pady=2)
 entry_c.insert(0, output_directory)
 
 # Button
-load_button_2= ttk.Button (tab3, text="...", command=show_features_window, width=10)
-load_button_2.grid (row=0,column=2,sticky="w",padx=100)
+path_pkl = None  # Initializing path_pkl variable
+load_button_2= ttk.Button (tab3, text="...", command=open_file_pkl, width=10)
+load_button_2.grid (row=2,column=2,sticky="w",padx=100)
+
+path_feature = None  # Initializing path_pkl variable
+load_button_3= ttk.Button (tab3, text="...", command=open_file_feature, width=10)
+load_button_3.grid (row=1,column=2,sticky="w",padx=100)
 
 run_button_p= ttk.Button (tab3, text="OK", command=run_algorithm_3, width=10)
-run_button_p.grid (row=2,column=1,sticky="e",padx=100)
+run_button_p.grid (row=4,column=1,sticky="e",padx=100)
 cancel_button_p= ttk.Button (tab3, text="Cancel", command=destroy,width=10)
-cancel_button_p.grid (row=2,column=1,sticky="e")
+cancel_button_p.grid (row=4,column=1,sticky="e")
 output_button_c = ttk.Button(tab3, text="...", command=select_directory, width=10) 
-output_button_c.grid(row=1,column=2,sticky="e",padx=100)
+output_button_c.grid(row=3,column=2,sticky="e",padx=100)
 
 
 root.mainloop()
