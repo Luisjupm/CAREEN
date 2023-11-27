@@ -48,7 +48,6 @@ script_directory = os.path.abspath(__file__)
 path_parts = script_directory.split(os.path.sep)
 
 additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\main_module'
-print (additional_modules_directory)
 sys.path.insert(0, additional_modules_directory)
 from main import P2p_getdata,get_istance,get_point_clouds_name
 
@@ -61,11 +60,8 @@ input_file=os.path.join(current_directory,'..','temp_folder_for_results','Machin
 processing_file_of=os.path.join(current_directory,'optimal_flow-0.1.11\\optimal_flow-0.1.11.exe')
 
 #Classification
-train_file=os.path.join(current_directory,'..','temp_folder_for_results','Machine_Learning','INPUT_classification','input_class_train.txt')
-test_file=os.path.join(current_directory,'..','temp_folder_for_results','Machine_Learning','INPUT_classification','input_class_test.txt')
 output_directory=os.path.join(current_directory,'..','temp_folder_for_results','Machine_Learning','OUTPUT')
-output_file_features= os.path.join(output_directory, 'features_file.txt')
-output_file_selectors= os.path.join(output_directory, 'selectors_file.txt')
+
 processing_file_rf=os.path.join(current_directory,'random_forest-1.3.2\\random_forest-1.3.2.exe')
 processing_file_tpot=os.path.join(current_directory,'t_pot-0.12.1\\TPOT.exe')
 
@@ -346,10 +342,6 @@ def show_features_window ():
             else:
                 print("The features " + str(features2include) + " have been included for the training")
         
-            # Make list with the features for P.T. classification
-            with open(output_file_features, "w") as output_file:
-                output_file.write(','.join(features2include))
-
         feature_window.destroy ()
         
     def cancel_features_window ():
@@ -383,7 +375,8 @@ def run_algorithm_1 ():
     feature_selection_pcd=P2p_getdata(pc_classification,False,True,True)
     
     # Save the point clouds
-    feature_selection_pcd.to_csv(input_file,sep=' ',header=True,index=False)
+    
+    feature_selection_pcd.to_csv(os.path.join(output_directory, 'features.txt'),sep=' ',header=True,index=False)
     
     #OPTIMAL FLOW
     # Load the selection from the file
@@ -396,52 +389,12 @@ def run_algorithm_1 ():
     cv = entry_var_d.get()
     
     command = processing_file_of + ' --i ' + input_file + ' --o ' + output_directory + ' --s ' + s + ' --f ' + f + ' --cv ' + cv
-    os.system(command)
-    print(command)
+    # os.system(command)
+    # print(command)
     
     print("The process has been finished")
     
 def run_algorithm_2 ():
-    
-    CC= pycc.GetInstance()
-    entities= CC.getSelectedEntities()[0]
-    
-    training_pc_name=combo1.get()
-    testing_pc_name=combo2.get()
-    index=-1
-    for ii, item in enumerate (name_list):
-        if item== training_pc_name:
-            pc_training=entities.getChild(ii)
-            break
-    for it, item in enumerate (name_list):
-        if item== testing_pc_name:
-            pc_testing=entities.getChild(it)
-            break
-    pcd_training=P2p_getdata(pc_training,False,True,True)
-    pcd_testing=P2p_getdata(pc_testing,False,True,True)
-    
-    # Save the point clouds
-    pcd_training.to_csv(train_file,sep=' ',header=True,index=False)
-    pcd_testing.to_csv(test_file,sep=' ',header=True,index=False)
-    
-    # labels2include= ['Classification']
-    # #Clean the dataframe, and drop all the line that contains a NaN (Not a Number) value.
-    # pcd_training.dropna(inplace=True)
-    # pcd_testing.dropna(inplace=True)
-    # #Create training and testing
-    # labels_train=pcd_training[labels2include]
-    # features=pcd_training[features2include]
-    # #features_train = MinMaxScaler().fit_transform(features)
-    # features_train=features
-    # labels_evaluation=pcd_testing[labels2include]
-    # features=pcd_testing[features2include]
-    # #features_evaluation = MinMaxScaler().fit_transform(features)
-    # features_evaluation=features
-    # X_test=features_evaluation
-    # y_test=labels_evaluation.to_numpy()
-
-    # X_train=features_train
-    # y_train=labels_train.to_numpy()
     
     def random_forest_command():
         random_forest_instance = random_forest()
@@ -458,7 +411,7 @@ def run_algorithm_2 ():
         nj_str=-1
         nj=str(nj_str)
         
-        command = processing_file_rf + ' --te ' + test_file + ' --tr ' + train_file + ' --o ' + output_directory + ' --ne ' + ne + ' --c ' + c + ' --md ' + md + ' --ms ' + ms + ' --mns ' + mns + ' --mwf ' + mwf + ' --mf ' + mf + ' --bt ' + bt + ' --s ' + s + ' --nj ' + nj
+        command = processing_file_rf + ' --te ' + os.path.join(output_directory, 'input_class_test.txt') + ' --tr ' + os.path.join(output_directory, 'input_class_train.txt') + ' --o ' + output_directory + ' --ne ' + ne + ' --c ' + c + ' --md ' + md + ' --ms ' + ms + ' --mns ' + mns + ' --mwf ' + mwf + ' --mf ' + mf + ' --bt ' + bt + ' --s ' + s + ' --nj ' + nj
         os.system(command)
         print(command)
     
@@ -491,49 +444,93 @@ def run_algorithm_2 ():
         s = auto_ml_instance['combo9'].get()
         
         
-        command = processing_file_tpot + ' --te ' + test_file + ' --tr ' + train_file + ' --o ' + output_directory + ' --f ' + output_file_features + ' --ge ' + ge + ' --ps ' + ps + ' --mr ' + mr + ' --cr ' + cr + ' --cv ' + cv + ' --mtm ' + mtm + ' --metm ' + metm + ' --ng ' + ng + ' --s ' + s
-        os.system(command)
-        print(command)
+        command = processing_file_tpot + ' --te ' + os.path.join(output_directory, 'input_class_test.txt') + ' --tr ' + os.path.join(output_directory, 'input_class_train.txt') + ' --o ' + output_directory + ' --f ' + os.path.join(output_directory, 'features.txt') + ' --ge ' + ge + ' --ps ' + ps + ' --mr ' + mr + ' --cr ' + cr + ' --cv ' + cv + ' --mtm ' + mtm + ' --metm ' + metm + ' --ng ' + ng + ' --s ' + s
+        return (command)
+        
+        
         
     def execute_selected_function():
         selected_function = combo3.get()
         if selected_function == "Random Forest":
-            random_forest_command()
+            command=random_forest_command()
         elif selected_function == "Logistic Regression":
-            logistic_regression_command()
+            command=logistic_regression_command()
         elif selected_function == "Auto Machine Learning":
-            auto_machine_learning_command()
+            command=auto_machine_learning_command()
+        return command
     
-    execute_selected_function()
     
-    with open(output_directory + "\\predictions.txt", "r") as file:
-        y_pred = [line.strip() for line in file]
     
-    # Convertir la cadena de predicciones a una lista de números
-    y_pred_numbers = [float(value) for value in ' '.join(y_pred).split()]
+    CC= pycc.GetInstance()
+    entities= CC.getSelectedEntities()[0]
     
+    training_pc_name=combo1.get()
+    testing_pc_name=combo2.get()
+    index=-1
+    for ii, item in enumerate (name_list):
+        if item== training_pc_name:
+            pc_training=entities.getChild(ii)
+            break
+    for it, item in enumerate (name_list):
+        if item== testing_pc_name:
+            pc_testing=entities.getChild(it)
+            break
+    pcd_training=P2p_getdata(pc_training,False,True,True)
+    pcd_testing=P2p_getdata(pc_testing,False,True,True)
+    
+    # Save the point clouds and the features
+    # Join the list items with commas to create a comma-separated string
+    comma_separated = ','.join(features2include)    
+    # Write the comma-separated string to a text file
+    with open(os.path.join(output_directory, 'features.txt'), 'w') as file:
+        file.write(comma_separated)  
+    pcd_training.to_csv(os.path.join(output_directory, 'input_class_train.txt'),sep=' ',header=True,index=False)
+    pcd_testing.to_csv(os.path.join(output_directory, 'input_class_test.txt'),sep=' ',header=True,index=False)   
+
+    
+    # RUN THE COMMAND LINE
+    command=execute_selected_function()
+    os.system(command)    
+    
+    data = pd.read_csv(os.path.join(output_directory, 'predictions.txt'), delimiter=',')  # Assumes comma-separated columns
+
     
     # Create the resulting point cloud
-    pc_results_test = pycc.ccPointCloud(pcd_testing['X'], pcd_testing['Y'], pcd_testing['Z'])
-    
-    if len(y_pred_numbers) != len(pc_results_test):
-        y_pred_numbers = y_pred_numbers[:len(pc_results_test)]
-    
-    pc_results_test.setName("Results_from_prediction")
-    pc_results_test.addScalarField("Classification", y_pred_numbers)
-    
-    if len(y_pred_numbers) == len(pc_results_test):
-        pc_results_test.addScalarField("Classification", y_pred_numbers)
-        CC.addToDB(pc_results_test)
-        CC.updateUI()
-    else:
-        print("La longitud de y_pred_numbers no coincide con el tamaño de la nube de puntos.")
-        
-    # Store in the database of CloudCompare
-    # CC.addToDB(pc_results_test)
-    # CC.updateUI()
-    
+    pc_prediction = pycc.ccPointCloud(data['X'], data['Y'], data['Z'])
+    pc_prediction.setName("Results_from_prediction")
+    pc_prediction.addScalarField("Predictions", data['Predictions']) 
+    CC.addToDB(pc_prediction)
+    CC.updateUI()
     print("The process has been finished")
+    
+    # with open(output_directory + "\\predictions.txt", "r") as file:
+    #     y_pred = [line.strip() for line in file]
+    
+    # # Convertir la cadena de predicciones a una lista de números
+    # y_pred_numbers = [float(value) for value in ' '.join(y_pred).split()]
+    
+    
+    # # Create the resulting point cloud
+    # pc_results_test = pycc.ccPointCloud(pcd_testing['X'], pcd_testing['Y'], pcd_testing['Z'])
+    
+    # if len(y_pred_numbers) != len(pc_results_test):
+    #     y_pred_numbers = y_pred_numbers[:len(pc_results_test)]
+    
+    # pc_results_test.setName("Results_from_prediction")
+    # pc_results_test.addScalarField("Classification", y_pred_numbers)
+    
+    # if len(y_pred_numbers) == len(pc_results_test):
+    #     pc_results_test.addScalarField("Classification", y_pred_numbers)
+    #     CC.addToDB(pc_results_test)
+    #     CC.updateUI()
+    # else:
+    #     print("La longitud de y_pred_numbers no coincide con el tamaño de la nube de puntos.")
+        
+    # # Store in the database of CloudCompare
+    # # CC.addToDB(pc_results_test)
+    # # CC.updateUI()
+    
+    # print("The process has been finished")
             
     
 def run_algorithm_3 ():

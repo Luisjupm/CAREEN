@@ -30,9 +30,6 @@ import tpot
 #%% DEFINING INPUTS OF CMD
 current_directory=os.path.dirname(os.path.abspath(__file__))
 temp_folder=os.path.join(current_directory,'..','temp')
-# test_file = 'C:\\Users\\Digi_2\\Documents\\GitHub\\CAREEN\\temp_folder_for_results\\Machine_Learning\\INPUT_classification\\input_class_test.txt'
-# train_file = 'C:\\Users\\Digi_2\\Documents\\GitHub\\CAREEN\\temp_folder_for_results\\Machine_Learning\\INPUT_classification\\input_class_train.txt'
-# output_directory = 'C:\\Users\\Digi_2\\Documents\\GitHub\\CAREEN\\temp_folder_for_results\\Machine_Learning\\OUTPUT'
 
 def main():
     parser = argparse.ArgumentParser()
@@ -79,18 +76,8 @@ def main():
     print("Value chosen for early stop = " + early_stop)
     scoring=args.s
     print("Scoring chosen = " + scoring)
-    
-    
-    # generations=1
-    # population_size=20
-    # mutation_rate=0.9
-    # crossover_rate=0.1
-    # scoring="balanced_accuracy"
-    # cv=2
-    # max_time_mins=60
-    # max_eval_time_mins=10
-    # early_stop=2
-    
+  
+   
     #Store in a Pandas dataframe the content of the file
     pcd_training=pd.read_csv(train_file,delimiter=' ')
     
@@ -104,55 +91,40 @@ def main():
     #Create training and testing
     labels_train=pcd_training[labels2include]
 
-    with open(output_directory + "\\features_file.txt", "r") as file:
+    with open(output_directory + "\\features.txt", "r") as file:
         features2include = [line.strip().split(',') for line in file]    
     features=pcd_training[features2include[0]]
-    #features_train = MinMaxScaler().fit_transform(features)
     features_train=features
     labels_evaluation=pcd_testing[labels2include]
     features=pcd_testing[features2include[0]]
-    #features_evaluation = MinMaxScaler().fit_transform(features)
     features_evaluation=features
     X_test=features_evaluation
     y_test1=labels_evaluation.to_numpy()
 
     X_train=features_train
     y_train=labels_train.to_numpy()
-    
-    # # Asegúrate de que las características (X) sean de tipo float64
-    # X_train = X_train1.astype('float64')
-    # X_test = X_test1.astype('float64')
-    
-    # # Asegúrate de que las etiquetas (y) sean de tipo int32
-    # y_train = y_train1.astype('int32')
-    # y_test = y_test1.astype('int32') 
+    # Assuming y is a column vector or a 2D array
+    y_train_reshaped = np.ravel(y_train)
     
     pipeline_optimizer = TPOTClassifier(
-                                        generations=generations,
-                                        population_size=population_size,
-                                        mutation_rate=mutation_rate,
-                                        crossover_rate=crossover_rate,
+                                        generations=int(generations),
+                                        population_size=int(population_size),
+                                        mutation_rate=float(mutation_rate),
+                                        crossover_rate=float(crossover_rate),
                                         scoring=scoring,
-                                        cv=cv,
-                                        max_time_mins=max_time_mins,
-                                        max_eval_time_mins=max_eval_time_mins,
-                                        early_stop=early_stop,
+                                        cv=int(cv),
+                                        max_time_mins=int(max_time_mins),
+                                        max_eval_time_mins=int(max_eval_time_mins),
+                                        early_stop=int(early_stop),
                                         random_state=None,
                                         verbosity=2,
                                         n_jobs=1,
-                                        use_dask=True
+                                        use_dask=False
                                         )
        
-    # y_train = y_train.astype(int)
-    # y_test = y_test.astype(int)
-    # y_test = labels_train.to_numpy().astype(int)
-    # y_train = labels_train.to_numpy().astype(int)
 
-    pipeline_optimizer.fit(X_train, y_train)
+    pipeline_optimizer.fit(X_train, y_train_reshaped)
     
-    # y_test = y_test1.to_numpy().ravel()
-    
-    # print(pipeline_optimizer.score(X_test, y_test))
     # Serialize the best pipeline (model) into a .pkl file
     joblib.dump(pipeline_optimizer.fitted_pipeline_,os.path.join(output_directory, 'best_pipeline.pkl'))  # Replace 'fitted_pipeline_' with the appropriate attribute
     
@@ -161,10 +133,12 @@ def main():
 
     # Assuming 'new_data' contains the data you want to predict on
     y_pred = loaded_model.predict(X_test)
-    y_pred_str = map(str, y_pred)
-    with open(os.path.join(output_directory, 'predictions.txt'), "w") as output_file:
-        output_file.write(' '.join(y_pred_str))
-    
+    # y_pred_str = map(str, y_pred)
+
+    pcd_testing_subset = pcd_testing[['X', 'Y', 'Z']].copy()
+    pcd_testing_subset['Predictions'] = y_pred
+    # Saving the DataFrame to a CSV file
+    pcd_testing_subset.to_csv(os.path.join(output_directory, 'predictions.txt'), index=False)
 
 if __name__=='__main__':
 	main()

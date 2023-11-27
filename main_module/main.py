@@ -16,9 +16,10 @@ def P2p_getdata (pc,nan_value=False,sc=True,color=True):
    pcd = pd.DataFrame(pc.points(), columns=['X', 'Y', 'Z'])
    if color==True:
        ## GET THE RGB COLORS
-       pcd['R']=pc.colors()[:,0]
-       pcd['G']=pc.colors()[:,1] 
-       pcd['B']=pc.colors()[:,2] 
+       # pcd['R']=pc.colors()[:,0]
+       # pcd['G']=pc.colors()[:,1] 
+       # pcd['B']=pc.colors()[:,2] 
+       pass
    if (sc==True):       
    ## ADD SCALAR FIELD TO THE DATAFRAME
        for i in range(pc.getNumberOfScalarFields()):
