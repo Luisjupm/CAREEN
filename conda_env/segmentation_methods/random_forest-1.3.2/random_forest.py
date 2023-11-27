@@ -6,8 +6,14 @@ Created on Tue Nov 14 11:36:37 2023
 """
 
 import argparse
+import joblib
 
-from pandas import pd
+import os
+import subprocess
+import sys
+
+import pandas as pd
+import numpy
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 from sklearn.ensemble import RandomForestClassifier
@@ -20,6 +26,11 @@ import itertools
 from matplotlib import pyplot as plt
 import pickle
 
+current_directory=os.path.dirname(os.path.abspath(__file__))
+temp_folder=os.path.join(current_directory,'..','temp')
+# test_file = 'C:\\Users\\Digi_2\\Documents\\GitHub\\CAREEN\\temp_folder_for_results\\Machine_Learning\\INPUT_classification\\input_class_test.txt'
+# train_file = 'C:\\Users\\Digi_2\\Documents\\GitHub\\CAREEN\\temp_folder_for_results\\Machine_Learning\\INPUT_classification\\input_class_train.txt'
+# output_directory = 'C:\\Users\\Digi_2\\Documents\\GitHub\\CAREEN\\temp_folder_for_results\\Machine_Learning\\OUTPUT'
 
 def main():
     parser = argparse.ArgumentParser()
@@ -70,24 +81,37 @@ def main():
     print("Number of jobs = " + n_jobs)
     
     
+    # n_estimators = [200]
+    # max_depth=[100]
+    # n_jobs=-1
+    # max_features = ["sqrt"]
+    # bootstrap=[True]
+    # criterion=["gini"]
+    # min_samples_split=[2]
+    # min_samples_leaf=[1]
+    # min_weight_fraction_leaf=[0]
+    # scoring=["balanced_accuracy"]
+    
     labels2include=['Classification']
 
-    #Store in a Pandas dataframe the content of the file on the google drive
+    #Store in a Pandas dataframe the content of the file
     pcd_train=pd.read_csv(test_file,delimiter=' ')
-    pcd_train
-    #Store in a Pandas dataframe the content of the file on the google drive
+    #Store in a Pandas dataframe the content of the file
     pcd_evaluation=pd.read_csv(train_file,delimiter=' ')
-    pcd_evaluation
     #Clean the dataframe, and drop all the line that contains a NaN (Not a Number) value.
     pcd_train.dropna(inplace=True)
     pcd_evaluation.dropna(inplace=True)
     #Create training and testing
     labels_train=pcd_train[labels2include]
-    features=pcd_train[features2include]
+    
+    with open(output_directory + "\\features_file.txt", "r") as file:
+        features2include = [line.strip().split(',') for line in file]    
+    features=pcd_train[features2include[0]]
+
     #features_train = MinMaxScaler().fit_transform(features)
     features_train=features
     labels_evaluation=pcd_evaluation[labels2include]
-    features=pcd_evaluation[features2include]
+    features=pcd_evaluation[features2include[0]]
     #features_evaluation = MinMaxScaler().fit_transform(features)
     features_evaluation=features
     X_test=features_evaluation
@@ -96,40 +120,78 @@ def main():
     X_train=features_train
     y_train=labels_train.to_numpy()
     
-    for ne, md, mf, bt, c, ms, mns, mwf, s, nj in list(itertools.product(n_estimators, max_depth, max_features, bootstrap, criterion, min_samples_split, min_samples_leaf, min_weight_fraction_leaf, scoring, n_jobs)):
-          if bt==False:
-            obb=False
-            rf_classifier = RandomForestClassifier(
-                                                    n_estimators = ne,
-                                                    max_depth=md,
-                                                    n_jobs=n_jobs,
-                                                    max_features=mf,
-                                                    random_state=42,
-                                                    bootstrap=bt,
-                                                    criterion=c,
-                                                    min_samples_split=ms,
-                                                    min_samples_leaf=mns,
-                                                    min_weight_fraction_leaf=mwf,
-                                                    scoring=s,
-                                                    n_jobs=nj                 
-                                                    )
-          else:
-            obb=True
-            rf_classifier = RandomForestClassifier(
-                                                    n_estimators = ne,
-                                                    max_depth=md,
-                                                    n_jobs=n_jobs,
-                                                    max_features=mf,
-                                                    random_state=42,
-                                                    oob_score=True,
-                                                    bootstrap=bt,
-                                                    criterion=c,
-                                                    min_samples_split=ms,
-                                                    min_samples_leaf=mns,
-                                                    min_weight_fraction_leaf=mwf,
-                                                    scoring=s,
-                                                    n_jobs=nj                 
-                                                    )
+    #*******************BEST MODEL***************************************
+    best_conf = {'ne' : 0, 'md' : 0, 'mf': 0, 'bt':0} 
+    best_f1 = 0
+    
+    for ne, md, mf, bt, c, ms, mns, mwf in list(itertools.product(n_estimators, max_depth, max_features, bootstrap, criterion, min_samples_split, min_samples_leaf, min_weight_fraction_leaf)):
+        if not bt:
+            obb = False
+        else:
+            obb = True
+    
+        rf_classifier = RandomForestClassifier(
+            n_estimators=ne,
+            max_depth=md,
+            max_features=mf,
+            random_state=42,
+            oob_score=obb,
+            bootstrap=bt,
+            criterion=c,
+            min_samples_split=ms,
+            min_samples_leaf=mns,
+            min_weight_fraction_leaf=mwf,
+            # scoring=s,
+            n_jobs=-1
+            )
+    rf_classifier.fit(X_train,y_train.ravel())
+    test_rf_predictions = rf_classifier.predict(X_test) 
+    # Compute metrics and update best model
+    acc = accuracy_score(y_test.ravel(), test_rf_predictions)
+    f1 = f1_score(y_test.ravel(), test_rf_predictions, average='weighted')
+    # Update best configuration
+    if f1 > best_f1:                                                
+       best_conf['ne'] = ne
+       best_conf['md'] = md
+       best_conf['mf'] = mf
+       best_conf['bt'] = bt
+       best_f1 = f1
+    if obb==True:
+      print('\tne: {}, md: {}, mf: {},  bt: {}- acc: {} f1: {} oob_score: {}'.format(ne, md,mf,bt, acc, f1, rf_classifier.oob_score_))
+    else:
+      print('\tne: {}, md: {}, mf: {},  bt: {}- acc: {} f1: {}'.format(ne, md,mf,bt, acc, f1))  
+  
+    print('Best parameters: ne: {}, md: {}, mf: {},  bt: {}'.format(best_conf['ne'], best_conf['md'], best_conf['mf'],best_conf['bt']))
+    
+    #*******************IMPORTANCE***************************************
+    print('Parameters used for the final Random Forest classificator: ne: {}, md: {}, bt: {}'.format(best_conf['ne'], best_conf['md'],best_conf['bt']))
+    if best_conf['bt']==False:
+      rf_classifier = RandomForestClassifier(n_estimators = best_conf['ne'],max_depth= best_conf['md'],bootstrap=best_conf['bt'],n_jobs=n_jobs,random_state=42)
+    else:
+      rf_classifier = RandomForestClassifier(n_estimators = best_conf['ne'],max_depth= best_conf['md'],bootstrap=best_conf['bt'],n_jobs=n_jobs,random_state=42,oob_score=True)
+    rf_classifier.fit(X_train,y_train.ravel())
 
+    fi = pd.DataFrame({'feature': list(X_train),'importance': rf_classifier.feature_importances_}).sort_values('importance', ascending = True)
+    fig, ax = plt.subplots(figsize=(15,20))
+    ax.barh(fi['feature'], fi['importance'])
+    fi.to_csv(output_directory+'/Feature_importance.csv', encoding = 'utf-8-sig') 
+    fi
+    plt.savefig(output_directory+'/Feature_importance.jpg')
+
+    #*******************CONFUSION MATRIX***************************************
+    import seaborn as sns
+    fig, ax = plt.subplots(figsize=(5,5))
+    test_rf_predictions = rf_classifier.predict(X_test)  
+    sns.heatmap(confusion_matrix(y_test.ravel(),test_rf_predictions), annot=True,cmap='Blues',fmt='d')
+    plt.savefig(output_directory+'/Confusion_matrix.jpg')
+    #*******************MATRIZ CLASSIFICATION***************************************
+    print(classification_report(y_test, test_rf_predictions,digits=3))
+
+    #ESCRITURA MODELO FINAL
+    pcd_evaluation['predictions']=test_rf_predictions
+    pcd_evaluation[['X','Y','Z','predictions']].to_csv(output_directory+'/Classified_results.xyz', index=None, sep=' ')
+    pickle.dump(rf_classifier, open(output_directory+"/Classifier.pkl", 'wb'))
+    
+    
 if __name__=='__main__':
 	main()
