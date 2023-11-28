@@ -429,9 +429,9 @@ def run_algorithm_2 ():
         nj_str=-1
         nj=str(nj_str)
         
-        command = processing_file_rf + ' --te ' + os.path.join(output_directory, 'input_class_test.txt') + ' --tr ' + os.path.join(output_directory, 'input_class_train.txt') + ' --o ' + output_directory + ' --ne ' + ne + ' --c ' + c + ' --md ' + md + ' --ms ' + ms + ' --mns ' + mns + ' --mwf ' + mwf + ' --mf ' + mf + ' --bt ' + bt + ' --s ' + s + ' --nj ' + nj
-        os.system(command)
+        command = processing_file_rf + ' --te ' + os.path.join(output_directory, 'input_class_test.txt') + ' --tr ' + os.path.join(output_directory, 'input_class_train.txt') + ' --o ' + output_directory + ' --f ' + os.path.join(output_directory, 'features.txt') + ' --ne ' + ne + ' --c ' + c + ' --md ' + md + ' --ms ' + ms + ' --mns ' + mns + ' --mwf ' + mwf + ' --mf ' + mf + ' --bt ' + bt + ' --s ' + s + ' --nj ' + nj
         print(command)
+        return (command)
     
     def logistic_regression_command():
         print("This algorithm still doesn't work, please, select another algorithm")

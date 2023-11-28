@@ -37,6 +37,7 @@ def main():
     parser.add_argument('--te',type=str,help='Path for the test file')
     parser.add_argument('--tr',type=str,help='Path for the train file')
     parser.add_argument('--o',type=str,help='Path for the output file')
+    parser.add_argument('--f',type=str,help='Path for the features')
     parser.add_argument('--ne',type=str,help='Path for the number of estimators')
     parser.add_argument('--c',type=str,help='Path for the criterion')
     parser.add_argument('--md',type=str,help='Path for the maximum depth of the threes')
@@ -95,36 +96,44 @@ def main():
     labels2include=['Classification']
 
     #Store in a Pandas dataframe the content of the file
-    pcd_train=pd.read_csv(test_file,delimiter=' ')
+    pcd_training=pd.read_csv(test_file,delimiter=' ')
     #Store in a Pandas dataframe the content of the file
-    pcd_evaluation=pd.read_csv(train_file,delimiter=' ')
+    pcd_testing=pd.read_csv(train_file,delimiter=' ')
     #Clean the dataframe, and drop all the line that contains a NaN (Not a Number) value.
-    pcd_train.dropna(inplace=True)
-    pcd_evaluation.dropna(inplace=True)
+    pcd_training.dropna(inplace=True)
+    pcd_testing.dropna(inplace=True)
     #Create training and testing
-    labels_train=pcd_train[labels2include]
+    labels_training=pcd_training[labels2include]
     
     with open(output_directory + "\\features_file.txt", "r") as file:
         features2include = [line.strip().split(',') for line in file]    
-    features=pcd_train[features2include[0]]
+    features=pcd_training[features2include[0]]
 
     #features_train = MinMaxScaler().fit_transform(features)
-    features_train=features
-    labels_evaluation=pcd_evaluation[labels2include]
-    features=pcd_evaluation[features2include[0]]
+    features_training=features
+    labels_testing=pcd_testing[labels2include]
+    features=pcd_testing[features2include[0]]
     #features_evaluation = MinMaxScaler().fit_transform(features)
-    features_evaluation=features
-    X_test=features_evaluation
-    y_test=labels_evaluation.to_numpy()
+    features_testing=features
+    X_test=features_testing
+    y_test=labels_testing.to_numpy()
 
-    X_train=features_train
-    y_train=labels_train.to_numpy()
+    X_train=features_training
+    y_train=labels_training.to_numpy()
     
     #*******************BEST MODEL***************************************
     best_conf = {'ne' : 0, 'md' : 0, 'mf': 0, 'bt':0} 
     best_f1 = 0
     
-    for ne, md, mf, bt, c, ms, mns, mwf in list(itertools.product(n_estimators, max_depth, max_features, bootstrap, criterion, min_samples_split, min_samples_leaf, min_weight_fraction_leaf)):
+    n_estimators = int(n_estimators)
+    max_depth = int(max_depth)
+    min_samples_split = int(min_samples_split)
+    min_samples_leaf = int(min_samples_leaf)
+    min_weight_fraction_leaf=int(min_weight_fraction_leaf)
+    n_jobs=int(n_jobs)
+    
+    for ne, md, mf, bt, c, ms, mns, mwf in list(itertools.product([n_estimators], [max_depth], [max_features], [bootstrap], [criterion], [min_samples_split], [min_samples_leaf], [min_weight_fraction_leaf])):
+        bt = bt.lower() == 'true'
         if not bt:
             obb = False
         else:
@@ -188,8 +197,8 @@ def main():
     print(classification_report(y_test, test_rf_predictions,digits=3))
 
     #ESCRITURA MODELO FINAL
-    pcd_evaluation['predictions']=test_rf_predictions
-    pcd_evaluation[['X','Y','Z','predictions']].to_csv(output_directory+'/Classified_results.xyz', index=None, sep=' ')
+    pcd_testing['Predictions']=test_rf_predictions
+    pcd_testing[['X','Y','Z','Predictions']].to_csv(os.path.join(output_directory, 'predictions.txt'), index=None)
     pickle.dump(rf_classifier, open(output_directory+"/Classifier.pkl", 'wb'))
     
     
