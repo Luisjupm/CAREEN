@@ -25,12 +25,10 @@ import matplotlib.pyplot as plt
 import itertools
 from matplotlib import pyplot as plt
 import pickle
-
+import seaborn as sns
 current_directory=os.path.dirname(os.path.abspath(__file__))
 temp_folder=os.path.join(current_directory,'..','temp')
-# test_file = 'C:\\Users\\Digi_2\\Documents\\GitHub\\CAREEN\\temp_folder_for_results\\Machine_Learning\\INPUT_classification\\input_class_test.txt'
-# train_file = 'C:\\Users\\Digi_2\\Documents\\GitHub\\CAREEN\\temp_folder_for_results\\Machine_Learning\\INPUT_classification\\input_class_train.txt'
-# output_directory = 'C:\\Users\\Digi_2\\Documents\\GitHub\\CAREEN\\temp_folder_for_results\\Machine_Learning\\OUTPUT'
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -82,30 +80,20 @@ def main():
     print("Number of jobs = " + n_jobs)
     
     
-    # n_estimators = [200]
-    # max_depth=[100]
-    # n_jobs=-1
-    # max_features = ["sqrt"]
-    # bootstrap=[True]
-    # criterion=["gini"]
-    # min_samples_split=[2]
-    # min_samples_leaf=[1]
-    # min_weight_fraction_leaf=[0]
-    # scoring=["balanced_accuracy"]
-    
+   
     labels2include=['Classification']
 
     #Store in a Pandas dataframe the content of the file
-    pcd_training=pd.read_csv(test_file,delimiter=' ')
+    pcd_training=pd.read_csv(train_file,delimiter=' ')
     #Store in a Pandas dataframe the content of the file
-    pcd_testing=pd.read_csv(train_file,delimiter=' ')
+    pcd_testing=pd.read_csv(test_file,delimiter=' ')
     #Clean the dataframe, and drop all the line that contains a NaN (Not a Number) value.
     pcd_training.dropna(inplace=True)
     pcd_testing.dropna(inplace=True)
     #Create training and testing
     labels_training=pcd_training[labels2include]
     
-    with open(output_directory + "\\features_file.txt", "r") as file:
+    with open(output_directory + "\\features.txt", "r") as file:
         features2include = [line.strip().split(',') for line in file]    
     features=pcd_training[features2include[0]]
 
@@ -184,11 +172,10 @@ def main():
     fig, ax = plt.subplots(figsize=(15,20))
     ax.barh(fi['feature'], fi['importance'])
     fi.to_csv(output_directory+'/Feature_importance.csv', encoding = 'utf-8-sig') 
-    fi
     plt.savefig(output_directory+'/Feature_importance.jpg')
 
     #*******************CONFUSION MATRIX***************************************
-    import seaborn as sns
+    
     fig, ax = plt.subplots(figsize=(5,5))
     test_rf_predictions = rf_classifier.predict(X_test)  
     sns.heatmap(confusion_matrix(y_test.ravel(),test_rf_predictions), annot=True,cmap='Blues',fmt='d')
@@ -199,7 +186,7 @@ def main():
     #ESCRITURA MODELO FINAL
     pcd_testing['Predictions']=test_rf_predictions
     pcd_testing[['X','Y','Z','Predictions']].to_csv(os.path.join(output_directory, 'predictions.txt'), index=None)
-    pickle.dump(rf_classifier, open(output_directory+"/Classifier.pkl", 'wb'))
+    pickle.dump(rf_classifier, open(output_directory+"/random_forest.pkl", 'wb'))
     
     
 if __name__=='__main__':

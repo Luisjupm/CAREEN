@@ -62,7 +62,7 @@ processing_file_of=os.path.join(current_directory,'optimal_flow-0.1.11\\optimal_
 #Classification
 output_directory=os.path.join(current_directory,'..','temp_folder_for_results','Machine_Learning','OUTPUT')
 
-processing_file_rf=os.path.join(current_directory,'random_forest-1.3.2\\random_forest-1.3.2.exe')
+processing_file_rf=os.path.join(current_directory,'random_forest-1.3.2\\random_forest.exe')
 processing_file_tpot=os.path.join(current_directory,'t_pot-0.12.1\\TPOT.exe')
 
 #Prediction
@@ -430,7 +430,6 @@ def run_algorithm_2 ():
         nj=str(nj_str)
         
         command = processing_file_rf + ' --te ' + os.path.join(output_directory, 'input_class_test.txt') + ' --tr ' + os.path.join(output_directory, 'input_class_train.txt') + ' --o ' + output_directory + ' --f ' + os.path.join(output_directory, 'features.txt') + ' --ne ' + ne + ' --c ' + c + ' --md ' + md + ' --ms ' + ms + ' --mns ' + mns + ' --mwf ' + mwf + ' --mf ' + mf + ' --bt ' + bt + ' --s ' + s + ' --nj ' + nj
-        print(command)
         return (command)
     
     def logistic_regression_command():
@@ -438,16 +437,6 @@ def run_algorithm_2 ():
     
     
     def auto_machine_learning_command():
-        # features_instance = show_features_window()
-        # f_str = [features_instance[var.get()] for var in features2include]
-        # features2include_str = ' '.join(map(str, f_str))
-        # with open(output_file_features, "r") as input_file:
-        #     features2include = [line.strip() for line in input_file]
-
-        # features2include_str = ' '.join(map(str, features2include))
-        
-        # print(features2include)
-        # print(features2include_str)
         
         auto_ml_instance = auto_machine_learning()
         
@@ -506,7 +495,7 @@ def run_algorithm_2 ():
     pcd_testing.to_csv(os.path.join(output_directory, 'input_class_test.txt'),sep=' ',header=True,index=False)   
 
     
-    # RUN THE COMMAND LINE
+    # # RUN THE COMMAND LINE
     command=execute_selected_function()
     os.system(command)    
     
@@ -521,36 +510,7 @@ def run_algorithm_2 ():
     CC.updateUI()
     print("The process has been finished")
     
-    # with open(output_directory + "\\predictions.txt", "r") as file:
-    #     y_pred = [line.strip() for line in file]
-    
-    # # Convertir la cadena de predicciones a una lista de números
-    # y_pred_numbers = [float(value) for value in ' '.join(y_pred).split()]
-    
-    
-    # # Create the resulting point cloud
-    # pc_results_test = pycc.ccPointCloud(pcd_testing['X'], pcd_testing['Y'], pcd_testing['Z'])
-    
-    # if len(y_pred_numbers) != len(pc_results_test):
-    #     y_pred_numbers = y_pred_numbers[:len(pc_results_test)]
-    
-    # pc_results_test.setName("Results_from_prediction")
-    # pc_results_test.addScalarField("Classification", y_pred_numbers)
-    
-    # if len(y_pred_numbers) == len(pc_results_test):
-    #     pc_results_test.addScalarField("Classification", y_pred_numbers)
-    #     CC.addToDB(pc_results_test)
-    #     CC.updateUI()
-    # else:
-    #     print("La longitud de y_pred_numbers no coincide con el tamaño de la nube de puntos.")
-        
-    # # Store in the database of CloudCompare
-    # # CC.addToDB(pc_results_test)
-    # # CC.updateUI()
-    
-    # print("The process has been finished")
-            
-    
+   
 def run_algorithm_3 ():
     
   
