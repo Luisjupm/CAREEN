@@ -51,13 +51,16 @@ additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\main_module'
 sys.path.insert(0, additional_modules_directory)
 from main import P2p_getdata,get_istance,get_point_clouds_name
 
+additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\segmentation_methods\optimal_flow-0.1.11'
+sys.path.insert(0, additional_modules_directory)
+
 #%% DEFINING INPUTS OF CMD
 current_directory=os.path.dirname(os.path.abspath(__file__))
 temp_folder=os.path.join(current_directory,'..','temp')
                           
 #Feature selection
 input_file=os.path.join(current_directory,'..','temp_folder_for_results','Machine_Learning','INPUT_feature_selection','input_features.txt')
-processing_file_of=os.path.join(current_directory,'optimal_flow-0.1.11\\optimal_flow-0.1.11.exe')
+processing_file_of=os.path.join(current_directory,'optimal_flow-0.1.11\\optimal_flow.exe')
 
 #Classification
 output_directory=os.path.join(current_directory,'..','temp_folder_for_results','Machine_Learning','OUTPUT')
@@ -381,6 +384,21 @@ def on_checkbox_checked(checked_var, value):
         
 def run_algorithm_1 ():
     
+    def optimal_flow_command():
+        # Load the selection from the file
+        load_selection_from_file()
+        # Get the selected parameters from the Listbox
+        selected_params = [selectors[i] for i in listbox.curselection()]
+        
+        s = ','.join(selected_params)
+        f = entry_var_c.get()
+        cv = entry_var_d.get()
+        
+        command = processing_file_of + ' --i ' + os.path.join(output_directory, 'input_features.txt') + ' --o ' + output_directory + ' --s ' + s + ' --f ' + f + ' --cv ' + cv
+        # print(command)
+        return command 
+    
+        
     CC= pycc.GetInstance()
     entities= CC.getSelectedEntities()[0]
     
@@ -392,25 +410,39 @@ def run_algorithm_1 ():
             break  
     feature_selection_pcd=P2p_getdata(pc_classification,False,True,True)
     
-    # Save the point clouds
+    # Save the point cloud
+    feature_selection_pcd.to_csv(os.path.join(output_directory, 'input_features.txt'),sep=' ',header=True,index=False)
     
-    feature_selection_pcd.to_csv(os.path.join(output_directory, 'features.txt'),sep=' ',header=True,index=False)
+    # # RUN THE COMMAND LINE
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    command=optimal_flow_command()
+    os.system(command)
+    os.chdir(current_directory)
     
-    #OPTIMAL FLOW
-    # Load the selection from the file
-    load_selection_from_file()
-    # Get the selected parameters from the Listbox
-    selected_params = [selectors[i] for i in listbox.curselection()]
+    def read_features_and_print(output_directory):
+        features_file = os.path.join(output_directory, "features.txt")
     
-    s = ' '.join(selected_params)
-    f = entry_var_c.get()
-    cv = entry_var_d.get()
+        # Esperar hasta que el archivo exista
+        while not os.path.exists(features_file):
+            time.sleep(1)  # Esperar 1 segundo antes de volver a verificar
     
-    command = processing_file_of + ' --i ' + input_file + ' --o ' + output_directory + ' --s ' + s + ' --f ' + f + ' --cv ' + cv
-    # os.system(command)
-    # print(command)
+        # Leer y imprimir las características seleccionadas
+        with open(features_file, "r") as file:
+            features = file.read()
     
-    print("The process has been finished")
+        print("Best features selected:", features)
+        print("The process has been finished")
+        
+    
+    read_features_and_print(output_directory)
+    
+    # # Read the selected features in CC
+    # features_selected = os.path.join(output_directory, "features.txt")
+    # with open(features_selected, "r") as file:
+    #     features = file.read()
+
+    # print("Best features selected: " + features)
+    # print("The process has been finished")
     
 def run_algorithm_2 ():
     
