@@ -16,27 +16,10 @@ from tkinter import filedialog
 
 import pandas as pd
 import numpy as np
+import pickle
 
 # FEATURE SELECTION
 import time
-# from optimalflow.autoFS import dynaFS_clf
-
-# CLASSIFICATION
-#Random Forest Libraries
-# from sklearn.model_selection import train_test_split
-# from sklearn.metrics import classification_report
-# from sklearn.ensemble import RandomForestClassifier
-# from sklearn.preprocessing import MinMaxScaler
-# from sklearn.metrics import accuracy_score
-# from sklearn.metrics import f1_score
-# from sklearn.metrics import confusion_matrix
-# import matplotlib.pyplot as plt
-# import itertools
-# from matplotlib import pyplot as plt
-# import pickle
-# #Auto Machine Learning Libraries
-# import IProgress
-# from tpot import TPOTClassifier
 
 #CloudCompare Python Plugin
 import cccorelib
@@ -54,19 +37,20 @@ from main import P2p_getdata,get_istance,get_point_clouds_name
 additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\segmentation_methods\optimal_flow-0.1.11'
 sys.path.insert(0, additional_modules_directory)
 
+additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\segmentation_methods\tpot-0.12.1'
+sys.path.insert(0, additional_modules_directory)
+
 #%% DEFINING INPUTS OF CMD
 current_directory=os.path.dirname(os.path.abspath(__file__))
 temp_folder=os.path.join(current_directory,'..','temp')
                           
 #Feature selection
-input_file=os.path.join(current_directory,'..','temp_folder_for_results','Machine_Learning','INPUT_feature_selection','input_features.txt')
 processing_file_of=os.path.join(current_directory,'optimal_flow-0.1.11\\optimal_flow.exe')
 
 #Classification
 output_directory=os.path.join(current_directory,'..','temp_folder_for_results','Machine_Learning','OUTPUT')
-
 processing_file_rf=os.path.join(current_directory,'random_forest-1.3.2\\random_forest.exe')
-processing_file_tpot=os.path.join(current_directory,'t_pot-0.12.1\\TPOT.exe')
+processing_file_tpot=os.path.join(current_directory,'tpot-0.12.1\\TPOT.exe')
 
 #Prediction
 processing_file_p=os.path.join(current_directory,'prediction_sklearn-1.3.2\\prediction_sklearn.exe')
@@ -118,24 +102,34 @@ def create_combobox(frame, values, row):
     combo.grid(column=1, row=row, sticky="e", pady=2)
     combo.set(values[0])
     return combo_var
-    
-def select_directory():
+
+def select_directory(entry_widgets):
     global output_directory
     directory = filedialog.askdirectory()
     if directory:
         output_directory = directory
-        entry_a.delete(0, tk.END)
-        entry_a.insert(0, output_directory)
-    elif directory:
-        output_directory = directory
-        entry_b.delete(0, tk.END)
-        entry_b.insert(0, output_directory)
-    elif directory:
-        output_directory = directory
-        entry_c.delete(0, tk.END)
-        entry_c.insert(0, output_directory)
 
+        # Update all entry widgets
+        for entry_widget in entry_widgets:
+            entry_widget.delete(0, tk.END)
+            entry_widget.insert(0, output_directory)
+            
+        # Change script directory before writting the pickle file
+        os.chdir(os.path.dirname(os.path.abspath(__file__)))
         
+        # Save the last selected folder in a pickle file
+        with open('config.pkl', 'wb') as file:
+            pickle.dump(output_directory, file)
+
+def create_entry_button_output(tab, row):
+    entry_widget = ttk.Entry(tab, width=30)
+    entry_widget.grid(row=row, column=1, sticky="e", pady=2)
+    entry_widget.insert(0, output_directory)
+
+    button_widget = ttk.Button(tab, text="...", command=lambda: select_directory([entry_widget]), width=10)
+    button_widget.grid(row=row, column=2, sticky="e", padx=100)
+    return entry_widget
+
 def on_ok_button_click():
     selected_items = listbox.curselection()
     selected_values = [listbox.get(index) for index in selected_items]
@@ -162,8 +156,6 @@ def load_selection_from_file():
         for i in selected_indices:
             listbox.selection_set(i)
 load_selection_from_file()
-
-
 
 def execute_selected_function():
     selected_function = combo3.get()
@@ -306,8 +298,16 @@ def auto_machine_learning():
             'combo9': combo9
             }
     
-
+# Select all the features in the features window
+def select_all_checkbuttons(checkbuttons):
+    for widget in checkbuttons:
+        if isinstance(widget, ttk.Checkbutton):
+            widget.state(['!alternate'])
+            widget.state(['selected'])
+        
 def show_features_window ():
+    global features2include
+    
     CC= pycc.GetInstance()
     entities= CC.getSelectedEntities()[0]
     
@@ -329,15 +329,19 @@ def show_features_window ():
     canvas = tk.Canvas(feature_window)
     features_frame = tk.Frame(canvas)
     features_frame.pack(side="bottom", fill="x")
+    
+    checkbutton_frame = tk.Frame(features_frame)
+    checkbutton_frame.pack(side="left", fill="y")
    
     features2include.clear()
     for value in values_list:
         checked_var = tk.BooleanVar()
-        ttk.Checkbutton(features_frame, text=value, variable=checked_var, onvalue=True, offvalue=False).pack(anchor="w")
+        ttk.Checkbutton(checkbutton_frame, text=value, variable=checked_var, onvalue=True, offvalue=False).pack(anchor="w")
         checked_var.trace_add("write", lambda var, indx, mode, checked_var=checked_var, value=value: on_checkbox_checked(checked_var, value))
    
     # Add the scroll bar
-    scrollbar = tk.Scrollbar(feature_window, orient="vertical", command=canvas.yview)
+    scrollbar = tk.Scrollbar(checkbutton_frame, orient="vertical", command=canvas.yview)
+    scrollbar.pack(side="right", fill="y")
     canvas.configure(yscrollcommand=scrollbar.set)
    
     scrollbar.config(command = values_list)
@@ -345,6 +349,9 @@ def show_features_window ():
     canvas.pack(side="left", fill="both", expand=True)
    
     canvas.create_window((0, 0), window=features_frame, anchor="nw")
+    
+    select_all_button = ttk.Button(features_frame, text="Select All", command=lambda: select_all_checkbuttons(checkbutton_frame.winfo_children()))
+    select_all_button.pack(side="top", pady=5)
             
     # Set the scroll bar while scrolling with mouse
     def _on_mousewheel(event):
@@ -367,14 +374,17 @@ def show_features_window ():
         
     def cancel_features_window ():
         feature_window.destroy ()
-        
-    ok_button_features= tk.Button (features_frame, text="OK", command= ok_features_window, width=10)
+    
+    button_frame = tk.Frame(features_frame)
+    button_frame.pack(side="right", fill="y")    
+    ok_button_features= ttk.Button (features_frame, text="OK", command= ok_features_window, width=10)
     ok_button_features.pack (side= "left")
-    cancel_button_features= tk.Button (features_frame, text="Cancel", command= cancel_features_window, width=10)
+    cancel_button_features= ttk.Button (features_frame, text="Cancel", command= cancel_features_window, width=10)
     cancel_button_features.pack (side= "right")
     
     return features2include
     print(features2include)
+    
     
 def on_checkbox_checked(checked_var, value):
     if checked_var.get() and value not in features2include:
@@ -395,7 +405,6 @@ def run_algorithm_1 ():
         cv = entry_var_d.get()
         
         command = processing_file_of + ' --i ' + os.path.join(output_directory, 'input_features.txt') + ' --o ' + output_directory + ' --s ' + s + ' --f ' + f + ' --cv ' + cv
-        # print(command)
         return command 
     
         
@@ -421,28 +430,17 @@ def run_algorithm_1 ():
     
     def read_features_and_print(output_directory):
         features_file = os.path.join(output_directory, "features.txt")
-    
-        # Esperar hasta que el archivo exista
+        # Wait until the file exists
         while not os.path.exists(features_file):
-            time.sleep(1)  # Esperar 1 segundo antes de volver a verificar
-    
-        # Leer y imprimir las características seleccionadas
+            time.sleep(1)  # Wait 1 sec 
+        # Read and print the selected features 
         with open(features_file, "r") as file:
             features = file.read()
     
         print("Best features selected:", features)
         print("The process has been finished")
         
-    
     read_features_and_print(output_directory)
-    
-    # # Read the selected features in CC
-    # features_selected = os.path.join(output_directory, "features.txt")
-    # with open(features_selected, "r") as file:
-    #     features = file.read()
-
-    # print("Best features selected: " + features)
-    # print("The process has been finished")
     
 def run_algorithm_2 ():
     
@@ -467,9 +465,7 @@ def run_algorithm_2 ():
     def logistic_regression_command():
         print("This algorithm still doesn't work, please, select another algorithm")
     
-    
     def auto_machine_learning_command():
-        
         auto_ml_instance = auto_machine_learning()
         
         ge = auto_ml_instance['entry_var_1'].get()
@@ -482,11 +478,8 @@ def run_algorithm_2 ():
         ng = auto_ml_instance['entry_var_8'].get()
         s = auto_ml_instance['combo9'].get()
         
-        
         command = processing_file_tpot + ' --te ' + os.path.join(output_directory, 'input_class_test.txt') + ' --tr ' + os.path.join(output_directory, 'input_class_train.txt') + ' --o ' + output_directory + ' --f ' + os.path.join(output_directory, 'features.txt') + ' --ge ' + ge + ' --ps ' + ps + ' --mr ' + mr + ' --cr ' + cr + ' --cv ' + cv + ' --mtm ' + mtm + ' --metm ' + metm + ' --ng ' + ng + ' --s ' + s
         return (command)
-        
-        
         
     def execute_selected_function():
         selected_function = combo3.get()
@@ -497,7 +490,6 @@ def run_algorithm_2 ():
         elif selected_function == "Auto Machine Learning":
             command=auto_machine_learning_command()
         return command
-    
     
     
     CC= pycc.GetInstance()
@@ -528,18 +520,47 @@ def run_algorithm_2 ():
 
     
     # # RUN THE COMMAND LINE
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     command=execute_selected_function()
-    os.system(command)    
+    os.system(command)
+    os.chdir(current_directory)    
     
-    data = pd.read_csv(os.path.join(output_directory, 'predictions.txt'), delimiter=',')  # Assumes comma-separated columns
-
+    # def read_features_and_print(output_directory):
+    #     data = pd.read_csv(os.path.join(output_directory, 'predictions.txt'), delimiter=',')  # Assumes comma-separated columns
+    #     # Wait until the file exists
+    #     while not os.path.exists(data):
+    #         time.sleep(1)  # Wait 1 sec 
+    #     # Create the resulting point cloud
+    #     pc_prediction = pycc.ccPointCloud(data['X'], data['Y'], data['Z'])
+    #     pc_prediction.setName("Results_from_prediction")
+    #     pc_prediction.addScalarField("Predictions", data['Predictions']) 
+    #     CC.addToDB(pc_prediction)
+    #     CC.updateUI()
+        
+    # read_features_and_print(output_directory)
     
-    # Create the resulting point cloud
-    pc_prediction = pycc.ccPointCloud(data['X'], data['Y'], data['Z'])
-    pc_prediction.setName("Results_from_prediction")
-    pc_prediction.addScalarField("Predictions", data['Predictions']) 
-    CC.addToDB(pc_prediction)
-    CC.updateUI()
+    def read_features_and_print(output_directory):
+        predictions_file = os.path.join(output_directory, 'predictions.txt')
+        
+        # Esperar hasta que el archivo exista
+        while not os.path.exists(predictions_file):
+            time.sleep(1)  # Esperar 1 segundo antes de volver a verificar
+    
+        # Leer y procesar las características
+        data = pd.read_csv(predictions_file, delimiter=',')  # Asumiendo columnas separadas por comas
+    
+        # Crear el punto de nube resultante
+        pc_prediction = pycc.ccPointCloud(data['X'], data['Y'], data['Z'])
+        pc_prediction.setName("Results_from_prediction")
+        pc_prediction.addScalarField("Predictions", data['Predictions'])
+    
+        # Agregar el resultado al CloudCompare
+        CC.addToDB(pc_prediction)
+        CC.updateUI()
+    
+    # Llamas a la función después de ejecutar el comando
+    read_features_and_print(output_directory)
+    
     print("The process has been finished")
     
    
@@ -591,7 +612,16 @@ if type_data=='point_cloud':
     raise RuntimeError ("Please select the folder that contains the point clouds")
 if number ==0:
     raise RuntimeError ("The folder does not contain the minimum number of point clouds (1)") 
+    
+#%% OTHERS
 
+# Read the pickle file if exists
+if os.path.exists('config.pkl'):
+    with open('config.pkl', 'rb') as file:
+        output_directory = pickle.load(file)
+else:
+    output_directory = ''
+    
 #%% GUI
 # Create the main window
 root = tk.Tk()
@@ -623,26 +653,27 @@ tooltip.place_forget()
 # TAB FEATURE SELECTION
 
 # Labels
-Label_a= ttk.Label(tab1, text="Choose point cloud")
-Label_a.grid(column=0, row=0, pady=2, sticky="w")
-Label_b= ttk.Label(tab1, text="Selectors", cursor="question_arrow")
-Label_b.grid(column=0, row=1, pady=2, sticky="w")
-Label_c= ttk.Label(tab1, text="Number of features to consider")
-Label_c.grid(column=0, row=2, pady=2, sticky="w")
-Label_d= ttk.Label(tab1, text="Folds for cross-validation")
-Label_d.grid(column=0, row=3, pady=2, sticky="w")
-Label_e= ttk.Label(tab1, text="Choose output directory")
-Label_e.grid(column=0, row=4, pady=2, sticky="w")
+label_a= ttk.Label(tab1, text="Choose point cloud")
+label_a.grid(column=0, row=0, pady=2, sticky="w")
+label_b= ttk.Label(tab1, text="Selectors", cursor="question_arrow")
+label_b.grid(column=0, row=1, pady=2, sticky="w")
+label_c= ttk.Label(tab1, text="Number of features to consider")
+label_c.grid(column=0, row=2, pady=2, sticky="w")
+label_d= ttk.Label(tab1, text="Folds for cross-validation")
+label_d.grid(column=0, row=3, pady=2, sticky="w")
+label_e= ttk.Label(tab1, text="Choose output directory")
+label_e.grid(column=0, row=4, pady=2, sticky="w")
 
 
-#Tooltips
+# Tooltips
 help_b = "NOTE: SVM based selectors are highly sensitive to the number of features(high-dimension)\n " \
          "and training records number, i.e.rfe_svm and rfecv_svm. When features number > 50 w/ records\n " \
          "number over 50K,otherwise will result in long processing time."
-create_tooltip(Label_b, help_b)
+create_tooltip(label_b, help_b)
+
 help_d = "The choice of the number of folds (cv) depends on the size of your dataset and the trade-off between computation\n " \
          "time and the reliability of the performance estimate. Common choices include 5-fold and 10-fold cross-validation."
-create_tooltip(Label_d, help_d)
+create_tooltip(label_d, help_d)
 
 # Combobox
 combo_pc=ttk.Combobox (tab1,values=name_list)
@@ -652,9 +683,7 @@ combo_pc.set("Select the point cloud used for feature selection")
 # Entry
 entry_var_c = create_entry(tab1, "Number of features to consider", 2, "25")
 entry_var_d = create_entry(tab1, "Folds for cross-validation", 3, "5")
-entry_a = ttk.Entry(tab1, width=30)
-entry_a.grid(row=4, column=1, sticky="e", pady=2)
-entry_a.insert(0, output_directory)
+entry_a = create_entry_button_output(tab1, 4)
 
 # Listbox
 s_var = [tk.IntVar() for _ in selectors]
@@ -675,26 +704,24 @@ run_button_a= ttk.Button (tab1, text="OK", command=run_algorithm_1, width=10)
 run_button_a.grid (row=5,column=1,sticky="e",padx=100)
 cancel_button_a= ttk.Button (tab1, text="Cancel", command=destroy,width=10)
 cancel_button_a.grid (row=5,column=1,sticky="e")
-output_button_a = ttk.Button(tab1, text="...", command= select_directory, width=10) 
-output_button_a.grid(row=4,column=2,sticky="e",padx=100)
 
 # TAB CLASSIFICATION
 
 # Labels
-Label_1= ttk.Label(tab2, text="Choose point cloud for training")
-Label_1.grid(column=0, row=0, pady=2, sticky="w")
-Label_2= ttk.Label(tab2, text="Choose point cloud for testing")
-Label_2.grid(column=0, row=1, pady=2,sticky="w")
-Label_3= ttk.Label(tab2, text="Select machine learning algorithm")
-Label_3.grid(column=0, row=2, pady=2, sticky="w")
-Label_4= ttk.Label(tab2, text="Select the features to include")
-Label_4.grid(column=0, row=3, pady=2, sticky="w")
-Label_4= ttk.Label(tab2, text="Choose output directory")
-Label_4.grid(column=0, row=4, pady=2, sticky="w")
+label_1= ttk.Label(tab2, text="Choose point cloud for training")
+label_1.grid(column=0, row=0, pady=2, sticky="w")
+label_2= ttk.Label(tab2, text="Choose point cloud for testing")
+label_2.grid(column=0, row=1, pady=2,sticky="w")
+label_3= ttk.Label(tab2, text="Select machine learning algorithm")
+label_3.grid(column=0, row=2, pady=2, sticky="w")
+label_4= ttk.Label(tab2, text="Select the features to include")
+label_4.grid(column=0, row=3, pady=2, sticky="w")
+label_4= ttk.Label(tab2, text="Choose output directory")
+label_4.grid(column=0, row=4, pady=2, sticky="w")
 
-#Tooltips
+# Tooltips
 help_3 = "After selecting the machine learning algorithm, please click Set-up for change parameters"
-create_tooltip(Label_3, help_3)
+create_tooltip(label_3, help_3)
 
 # Combobox
 combo1=ttk.Combobox (tab2,values=name_list)
@@ -708,9 +735,7 @@ combo3.grid(column=1, row=2, sticky="e", pady=2)
 combo3.set("Select the machine learning algorithm")
     
 # Entry
-entry_b = ttk.Entry(tab2, width=30)
-entry_b.grid(row=4, column=1, sticky="e", pady=2)
-entry_b.insert(0, output_directory)
+entry_b = create_entry_button_output(tab2, 4)
 
 # Button
 setup_button= ttk.Button (tab2, text="Set-up", command=lambda: execute_selected_function(), width=10)
@@ -723,20 +748,18 @@ run_button_1.grid (row=5,column=1,sticky="e",padx=100)
 cancel_button_1= ttk.Button (tab2, text="Cancel", command=destroy,width=10)
 cancel_button_1.grid (row=5,column=1,sticky="e")
 
-output_button_b = ttk.Button(tab2, text="...", command= select_directory, width=10) 
-output_button_b.grid(row=4,column=2,sticky="e",padx=100)
 
 # TAB PREDICTION
 
 # Labels
-Label_p1= ttk.Label(tab3, text="Choose point cloud for prediction")
-Label_p1.grid(column=0, row=0, pady=2, sticky="w")
-Label_p2= ttk.Label(tab3, text="Load feature file")
-Label_p2.grid(column=0, row=1, pady=2, sticky="w")
-Label_p3= ttk.Label(tab3, text="Load pkl file")
-Label_p3.grid(column=0, row=2, pady=2, sticky="w")
-Label_p4= ttk.Label(tab3, text="Choose output directory")
-Label_p4.grid(column=0, row=3, pady=2, sticky="w")
+label_p1= ttk.Label(tab3, text="Choose point cloud for prediction")
+label_p1.grid(column=0, row=0, pady=2, sticky="w")
+label_p2= ttk.Label(tab3, text="Load feature file")
+label_p2.grid(column=0, row=1, pady=2, sticky="w")
+label_p3= ttk.Label(tab3, text="Load pkl file")
+label_p3.grid(column=0, row=2, pady=2, sticky="w")
+label_p4= ttk.Label(tab3, text="Choose output directory")
+label_p4.grid(column=0, row=3, pady=2, sticky="w")
 
 # Combobox
 combo4=ttk.Combobox (tab3,values=name_list)
@@ -744,9 +767,7 @@ combo4.grid(column=1, row=0, sticky="e", pady=2)
 combo4.set("Select the point cloud used for prediction")
 
 # Entry
-entry_c = ttk.Entry(tab3, width=30)
-entry_c.grid(row=3, column=1, sticky="e", pady=2)
-entry_c.insert(0, output_directory)
+entry_c = create_entry_button_output(tab3, 3)
 
 # Button
 path_pkl = None  # Initializing path_pkl variable
@@ -761,8 +782,6 @@ run_button_p= ttk.Button (tab3, text="OK", command=run_algorithm_3, width=10)
 run_button_p.grid (row=4,column=1,sticky="e",padx=100)
 cancel_button_p= ttk.Button (tab3, text="Cancel", command=destroy,width=10)
 cancel_button_p.grid (row=4,column=1,sticky="e")
-output_button_c = ttk.Button(tab3, text="...", command=select_directory, width=10) 
-output_button_c.grid(row=3,column=2,sticky="e",padx=100)
 
 
 root.mainloop()
