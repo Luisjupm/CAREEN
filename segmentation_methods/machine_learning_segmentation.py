@@ -298,100 +298,87 @@ def auto_machine_learning():
             'combo9': combo9
             }
     
-# Select all the features in the features window
-def select_all_checkbuttons(checkbuttons):
-    for widget in checkbuttons:
-        if isinstance(widget, ttk.Checkbutton):
-            widget.state(['!alternate'])
-            widget.state(['selected'])
-        
-def show_features_window ():
+# 
+def select_all_checkbuttons(checkbuttons_vars):
+    for var in checkbuttons_vars:
+        var.set(True)
+
+def show_features_window():
     global features2include
-    
-    CC= pycc.GetInstance()
-    entities= CC.getSelectedEntities()[0]
-    
-    training_pc_name=combo1.get()
-    
-    index=-1
-    for ii, item in enumerate (name_list):
-        if item== training_pc_name:
-            pc_training=entities.getChild(ii)
+
+    CC = pycc.GetInstance()
+    entities = CC.getSelectedEntities()[0]
+
+    training_pc_name = combo1.get()
+
+    index = -1
+    for ii, item in enumerate(name_list):
+        if item == training_pc_name:
+            pc_training = entities.getChild(ii)
             break
-    pcd_training=P2p_getdata(pc_training,False,True,True)
-    
-    values_list=[col for col in pcd_training.columns if col != 'Class']
-    labels2include= ['Classification']
-    
+    pcd_training = P2p_getdata(pc_training, False, True, True)
+
     feature_window = tk.Toplevel()
     feature_window.title("Features of the point cloud")
-   
-    canvas = tk.Canvas(feature_window)
-    features_frame = tk.Frame(canvas)
-    features_frame.pack(side="bottom", fill="x")
-    
-    checkbutton_frame = tk.Frame(features_frame)
+
+    checkbutton_frame = tk.Frame(feature_window)
     checkbutton_frame.pack(side="left", fill="y")
-   
-    features2include.clear()
-    for value in values_list:
-        checked_var = tk.BooleanVar()
-        ttk.Checkbutton(checkbutton_frame, text=value, variable=checked_var, onvalue=True, offvalue=False).pack(anchor="w")
-        checked_var.trace_add("write", lambda var, indx, mode, checked_var=checked_var, value=value: on_checkbox_checked(checked_var, value))
-   
-    # Add the scroll bar
+
+    canvas = tk.Canvas(checkbutton_frame)
+    features_frame = tk.Frame(canvas)
+
     scrollbar = tk.Scrollbar(checkbutton_frame, orient="vertical", command=canvas.yview)
     scrollbar.pack(side="right", fill="y")
+
     canvas.configure(yscrollcommand=scrollbar.set)
-   
-    scrollbar.config(command = values_list)
-    scrollbar.pack(side="right", fill="y")
     canvas.pack(side="left", fill="both", expand=True)
-   
+
     canvas.create_window((0, 0), window=features_frame, anchor="nw")
-    
-    select_all_button = ttk.Button(features_frame, text="Select All", command=lambda: select_all_checkbuttons(checkbutton_frame.winfo_children()))
+
+    # Buttons frame (static)
+    button_frame = tk.Frame(feature_window)
+    button_frame.pack(side="right", fill="y")
+
+    # Your checkbuttons and variables
+    values_list = [col for col in pcd_training.columns if col != 'Class']
+    checkbuttons_vars = [tk.BooleanVar() for _ in values_list]
+
+    for value, var in zip(values_list, checkbuttons_vars):
+        ttk.Checkbutton(features_frame, text=value, variable=var, onvalue=True, offvalue=False).pack(anchor="w")
+
+    select_all_button = ttk.Button(button_frame, text="Select All", command=lambda: select_all_checkbuttons(checkbuttons_vars))
     select_all_button.pack(side="top", pady=5)
-            
-    # Set the scroll bar while scrolling with mouse
+
     def _on_mousewheel(event):
-        canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
     canvas.bind_all("<MouseWheel>", _on_mousewheel)
-   
-    # Close the features window after selected
-    def ok_features_window ():
+
+    def ok_features_window():
         global features2include
+        features2include = [value for value, var in zip(values_list, checkbuttons_vars) if var.get()]
         if not features2include:
-            print ("Please, check at least one feature")
+            print("Please, check at least one feature")
         else:
             if len(features2include) == 1:
                 print("The feature " + str(features2include) + " has been included for the training")
             else:
                 print("The features " + str(features2include) + " have been included for the training")
-        
-        feature_window.destroy ()
-        
-    def cancel_features_window ():
-        feature_window.destroy ()
-    
-    button_frame = tk.Frame(features_frame)
-    button_frame.pack(side="right", fill="y")    
-    ok_button_features= ttk.Button (features_frame, text="OK", command= ok_features_window, width=10)
-    ok_button_features.pack (side= "left")
-    cancel_button_features= ttk.Button (features_frame, text="Cancel", command= cancel_features_window, width=10)
-    cancel_button_features.pack (side= "right")
-    
+
+        feature_window.destroy()
+
+    def cancel_features_window():
+        feature_window.destroy()
+
+    ok_button_features = ttk.Button(button_frame, text="OK", command=ok_features_window, width=10)
+    ok_button_features.pack(side="left")
+    cancel_button_features = ttk.Button(button_frame, text="Cancel", command=cancel_features_window, width=10)
+    cancel_button_features.pack(side="right")
+
     return features2include
     print(features2include)
-    
-    
-def on_checkbox_checked(checked_var, value):
-    if checked_var.get() and value not in features2include:
-        features2include.append(value)
-    elif not checked_var.get() and value in features2include:
-        features2include.remove(value) 
-        
+
+
 def run_algorithm_1 ():
     
     def optimal_flow_command():
