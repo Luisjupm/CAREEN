@@ -2,195 +2,41 @@
 """
 Created on Wed Jun 21 18:00:57 2023
 
-@author: Luisjaa
+@author: Luisja
 """
+
+#%% LIBRARIES
 import tkinter as tk
+from tkinter import ttk
+from tkinter import filedialog
 
 import cccorelib
 import pycc
 
 import pandas as pd
 import numpy as np
+
 from scipy.spatial import ConvexHull
 from scipy.spatial import distance
 from scipy.optimize import fsolve
+
 from itertools import combinations
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
-from tkinter import ttk
-from tkinter import filedialog
+
 import os
 import sys
 
-# ADDING THE MAIN MODULE FOR ADDITIONAL FUNCTIONS
+#%% ADDING THE MAIN MODULE FOR ADDITIONAL FUNCTIONS
 
 script_directory = os.path.abspath(__file__)
 path_parts = script_directory.split(os.path.sep)
 
 additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\main_module'
-print (additional_modules_directory)
 sys.path.insert(0, additional_modules_directory)
-from main import P2p_getdata,get_istance
+from main import P2p_getdata,get_istance,extract_longitudinal_axis, minBoundingRect, extract_points_within_tolerance
 
-
-def minBoundingRect(hull_points_2d):
-    #print "Input convex hull points: "
-    #print hull_points_2d
-
-    # Compute edges (x2-x1,y2-y1)
-    edges = np.zeros( (len(hull_points_2d)-1,2) ) # empty 2 column array
-    for i in range( len(edges) ):
-        edge_x = hull_points_2d[i+1,0] - hull_points_2d[i,0]
-        edge_y = hull_points_2d[i+1,1] - hull_points_2d[i,1]
-        edges[i] = [edge_x,edge_y]
-    #print "Edges: \n", edges
-
-    # Calculate edge angles   atan2(y/x)
-    edge_angles = np.zeros( (len(edges)) ) # empty 1 column array
-    for i in range( len(edge_angles) ):
-        edge_angles[i] = np.math.atan2( edges[i,1], edges[i,0] )
-    #print "Edge angles: \n", edge_angles
-
-    # Check for angles in 1st quadrant
-    for i in range( len(edge_angles) ):
-        edge_angles[i] = abs( edge_angles[i] % (np.math.pi/2) ) # want strictly positive answers
-    #print "Edge angles in 1st Quadrant: \n", edge_angles
-
-    # Remove duplicate angles
-    edge_angles = np.unique(edge_angles)
-    #print "Unique edge angles: \n", edge_angles
-
-    # Test each angle to find bounding box with smallest area
-    min_bbox = (0, 100000, 0, 0, 0, 0, 0, 0) # rot_angle, area, width, height, min_x, max_x, min_y, max_y
-    for i in range( len(edge_angles) ):
-
-        # Create rotation matrix to shift points to baseline
-        # R = [ cos(theta)      , cos(theta-PI/2)
-        #       cos(theta+PI/2) , cos(theta)     ]
-        R = np.array([ [ np.math.cos(edge_angles[i]), np.math.cos(edge_angles[i]-(np.math.pi/2)) ], [ np.math.cos(edge_angles[i]+(np.math.pi/2)), np.math.cos(edge_angles[i]) ] ])
-        #print "Rotation matrix for ", edge_angles[i], " is \n", R
-
-        # Apply this rotation to convex hull points
-        rot_points = np.dot(R, np.transpose(hull_points_2d) ) # 2x2 * 2xn
-        #print "Rotated hull points are \n", rot_points
-
-        # Find min/max x,y points
-        min_x = np.nanmin(rot_points[0], axis=0)
-        max_x = np.nanmax(rot_points[0], axis=0)
-        min_y = np.nanmin(rot_points[1], axis=0)
-        max_y = np.nanmax(rot_points[1], axis=0)
-        #print "Min x:", min_x, " Max x: ", max_x, "   Min y:", min_y, " Max y: ", max_y
-
-        # Calculate height/width/area of this bounding rectangle
-        width = max_x - min_x
-        height = max_y - min_y
-        area = width*height
-        #print "Potential bounding box ", i, ":  width: ", width, " height: ", height, "  area: ", area 
-
-        # Store the smallest rect found first (a simple convex hull might have 2 answers with same area)
-        if (area < min_bbox[1]):
-            min_bbox = ( edge_angles[i], area, width, height, min_x, max_x, min_y, max_y )
-        # Bypass, return the last found rect
-        #min_bbox = ( edge_angles[i], area, width, height, min_x, max_x, min_y, max_y )
-
-    # Re-create rotation matrix for smallest rect
-    angle = min_bbox[0]   
-    R = np.array([ [ np.math.cos(angle), np.math.cos(angle-(np.math.pi/2)) ], [ np.math.cos(angle+(np.math.pi/2)), np.math.cos(angle) ] ])
-
-    #print "Project hull points are \n", proj_points
-
-    # min/max x,y points are against baseline
-    min_x = min_bbox[4]
-    max_x = min_bbox[5]
-    min_y = min_bbox[6]
-    max_y = min_bbox[7]
-    #print "Min x:", min_x, " Max x: ", max_x, "   Min y:", min_y, " Max y: ", max_y
-
-    # Calculate center point and project onto rotated frame
-    center_x = (min_x + max_x)/2
-    center_y = (min_y + max_y)/2
-    center_point = np.dot( [ center_x, center_y ], R )
-    #print "Bounding box center point: \n", center_point
-
-    # Calculate corner points and project onto rotated frame
-    corner_points = np.zeros( (4,2) ) # empty 2 column array
-    corner_points[0] = np.dot( [ max_x, min_y ], R )
-    corner_points[1] = np.dot( [ min_x, min_y ], R )
-    corner_points[2] = np.dot( [ min_x, max_y ], R )
-    corner_points[3] = np.dot( [ max_x, max_y ], R )
-    
-    
-    # Calculate the midpoints on each side of the rectangle
-    midpoints = np.zeros( (4,2) ) # empty 2 column array
-    midpoints[0] = (corner_points[0] + corner_points[3]) / 2.0
-    midpoints[1] = (corner_points[0] + corner_points[1]) / 2.0
-    midpoints[2] = (corner_points[1] + corner_points[2]) / 2.0
-    midpoints[3] = (corner_points[2] + corner_points[3]) / 2.0
-
-    #print "Angle of rotation: ", angle, "rad  ", angle * (180/math.pi), "deg"
-
-    return (angle, min_bbox[1], min_bbox[2], min_bbox[3], center_point, corner_points,midpoints) # rot_angle, area, width, height, center_point, corner_points, mid_points
-
-def extract_longitudinal_axis(midpoints):
-    # Get all combinations of two midpoints
-    point_combinations = list(combinations(midpoints, 2))
-    
-    # Calculate the distances between the point combinations
-    distances = [np.linalg.norm(p2 - p1) for p1, p2 in point_combinations]
-    
-    # Find the index of the largest distance
-    max_distance_index = np.argmax(distances)
-    
-    # Extract the two midpoints corresponding to the largest distance
-    p1, p2 = point_combinations[max_distance_index]
-    
-    # Get the longitudinal axis (line connecting the two parallel sides)
-    longitudinal_axis = p2 - p1
-    longitudinal_axis_norm = distance.euclidean(p1, p2)
-    
-    #Calculate the angle between the longitudinal axis and the x-axis
-    angle_rad = np.arctan2(longitudinal_axis[1], longitudinal_axis[0])
-    angle_deg = np.degrees(angle_rad)
-
-    return  p1,p2,longitudinal_axis, longitudinal_axis_norm, angle_deg
-
-
-def extract_points_within_tolerance(point_cloud, tolerance,rot):
-    # Calculate the minimum bounding rectangle
-    point_cloud_red=point_cloud[:,:2]
-
-    _, _, _, _, center_point, corner_points,midpoints= minBoundingRect(point_cloud_red)
-    
-    p1,p2,longitudinal_axis, longitudinal_axis_norm, angle_deg=extract_longitudinal_axis(midpoints)
-    perpendicular = np.array([-longitudinal_axis[1], longitudinal_axis[0]])
-    perpendicular /= distance.euclidean([0, 0], perpendicular)
-    # Calculate the dot product of each point with the direction vector
-    dot_products = np.dot(point_cloud_red-p1, perpendicular)
-        
-    # Determine the points within the tolerance
-    points_within_tolerance = point_cloud[np.abs(dot_products) <= tolerance]
-    skeleton=points_within_tolerance
-    if rot==True:
-        points_within_tolerance=rotate_point_cloud_3d(points_within_tolerance, angle_deg)
-
-    return points_within_tolerance, skeleton
-
-def rotate_point_cloud_3d(point_cloud, angle_deg):
-    # Convert the rotation angle from degrees to radians
-    angle_rad = np.radians(angle_deg)
-    
-    # Compute the rotation matrix around the z-axis
-    cos_theta = np.cos(angle_rad)
-    sin_theta = np.sin(angle_rad)
-    rotation_matrix = np.array([[cos_theta, -sin_theta, 0],
-                                [sin_theta, cos_theta, 0],
-                                [0, 0, 1]])
-    
-    # Apply the rotation matrix to the point cloud
-    rotated_point_cloud = np.dot(point_cloud, rotation_matrix)
-    
-    return rotated_point_cloud
-
+#%% FUNCTIONS
 def select_path():
     # Abrir el diálogo para seleccionar la ruta de guardado
     path = filedialog.askdirectory()
@@ -220,6 +66,7 @@ def run_algorithm():
         data = []
     ## LOOP OVER EACH ELEMENT
         for i in range(number):
+            # Get the point cloud selected as a pandas frame
             pc = entities.getChild(i)
             pcd=P2p_getdata(pc,False,True,True)
             pcd_f,skeleton =extract_points_within_tolerance(pcd[['X','Y','Z']].values, Tolerance,True)
@@ -239,6 +86,8 @@ def run_algorithm():
                 filter_arr_2.append(False)
             second_derivative_roots_filtered = second_derivative_roots[filter_arr_2]
             z_second_derivative_roots_filtered = [curve(x) for x in second_derivative_roots_filtered]
+            
+            
             ## PLOTTING
             # Generate points on the curve for plotting
             x_curve = np.linspace(pcd_f[:,0].min(), pcd_f[:,0].max(), 100)
@@ -337,6 +186,8 @@ def run_algorithm():
     window.destroy()  # Close the window    
 def destroy():
     window.destroy()  # Close the window    
+
+#%% GUI
 # Create the main window
 window = tk.Tk()
 
@@ -353,7 +204,7 @@ form_frame.pack()
 # Variables de control para las opciones
 checkbox1_var = tk.BooleanVar()
 
-# Labels for the algorithms
+# Labels
 label_tolerance = tk.Label(form_frame, text="Thickness threshold:")
 label_tolerance.grid(row=0, column=0, sticky="w",pady=2)
 
@@ -392,13 +243,14 @@ entry_relative_deflection.grid(row=2, column=1, sticky="e",pady=2)
 save_path_textbox = tk.Entry(form_frame,width=30)
 save_path_textbox.grid(row=5,column=1, sticky="e",pady=2)
 
+# Combox
 algorithms = ["Data", "Fit"]
 combo_type = ttk.Combobox(form_frame, values=algorithms, state="readonly")
 combo_type.current(0)
 combo_type.grid(row=3, column=1, sticky="e",pady=2)
 
 
-
+# Buttons
 save_path_button = tk.Button(form_frame, text="...", command=select_path,width=2)
 save_path_button.grid(row=5, column=1, sticky="e",pady=2)
 
@@ -408,6 +260,6 @@ run_button.grid(row=6, column=1, sticky="e",padx=100)
 cancel_button.grid(row=6, column=1, sticky="e")
 
 
-
+#%% START THE GUI
 # Start the main event loop
 window.mainloop()

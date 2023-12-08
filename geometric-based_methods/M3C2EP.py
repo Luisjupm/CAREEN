@@ -51,6 +51,8 @@ def toggle_entry_state():
         label_core.config(state=tk.DISABLED)
 def destroy():
     window.destroy()  # Close the window    
+
+
 # Create the main window
 window = tk.Tk()
 
@@ -146,14 +148,6 @@ entry_diameter_of_cylinder.grid(row=5, column=1, sticky="e",pady=2)
 entry_lenght_of_cylinder = tk.Entry(form_frame,width=5)
 entry_lenght_of_cylinder.insert(0,3)
 entry_lenght_of_cylinder.grid(row=6, column=1, sticky="e",pady=2)
-
-
-
-
-
-
-
-
 
 
 # Start the main event loop
