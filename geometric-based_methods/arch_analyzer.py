@@ -31,6 +31,8 @@ sys.path.insert(0, additional_modules_directory)
 from main import P2p_getdata,get_istance,extract_longitudinal_axis, minBoundingRect, extract_points_within_tolerance
 from pointed_arch_equations import first_quarter_circle, second_quarter_circle, pointed_arch
 from ransac import RANSAC
+
+
 #%% FUNCTIONS
 def run_algorithm():
     ## STORE THE INPUT VARIABLES
@@ -66,31 +68,28 @@ def run_algorithm():
         # Create a istance of RANSAC depending on the type of arch (combo_type.get())
         ransac = RANSAC(pcd_f[:,0],pcd_f[:,2],num_iter_ransac,d_min,threhold_ransac,combo_type.get())  
         # # execute ransac algorithm
-        _,outliers,inliers=ransac.execute_ransac()         
-
-
-            
- 
-            
+        _,outliers,inliers=ransac.execute_ransac()              
         # Create the plot for inliers and outliers
         if len (inliers)>0:
             plt.scatter(inliers[:,0], inliers[:,1],color='g', label='Points consider as inliers')
         if len (outliers)>0:
             plt.scatter(outliers[:,0], outliers[:,1],color='r', label='Points consider as outliers')        
+        
         # # Create a scatter plot with blue dots for the best fit curve
         plt.scatter(ransac.best_x_coordinates, ransac.best_y_coordinates, c='b', s=10, label="Estimated arch by using RANSAC")
         plt.axis('scaled')
         plt.xlabel('longitudinal direction')
-        plt.ylabel('vertical direction')
-        
+        plt.ylabel('vertical direction')        
         plt.title('Section of arch_'+str(i))
         plt.legend()
         plt.grid(True)
+        
         # Save the plot as a PNG file
         if combo_type.get()=="Circular arch":
             plt.savefig(save_path_textbox.get()+'/circular_arch_'+str(i)+'.png')
         elif combo_type.get()=="Pointed arch":
             plt.savefig(save_path_textbox.get()+'/pointed_arch_'+str(i)+'.png')
+       
         # Clear the plot for the next iteration
         plt.clf()        
  

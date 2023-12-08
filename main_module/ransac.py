@@ -7,7 +7,48 @@ def circle_func(a, b, r, x):
 
 # Equations for the pointed arch
 def pointed_arch (arch_1,arch_2,radius, center_distance, center_x, center_y,threshold):
-
+    """
+    This function allow to calculate the parameters of interest for a pointed arch
+        
+    Parameters:
+    ----------
+    
+    arch_1 (numpy array nx2): array with the x,y coordinates of the points that represent the first quarter of arch
+    
+    arch_2 (numpy array nx2): array with the x,y coordinates of the points that represent the second quarter of arch
+    
+    radius (float): radius used for generating the pointed arch
+    
+    center_distance (float): distance between the center of the first and second quarter of arch
+    
+    center_x (float): x coodinate of the center of the first quarter of arch
+    
+    center_y (float): y coordinate of the center of the first quarter of arch
+    
+    threshold (float): threshold value for consider a point as inlier or outlier
+    
+    Returns:
+    ----------
+    
+    d (integer): number of inliers according with the RANSAC model
+    
+    arch_1_inliers (numpy array nx2): array of inliers for the first quarter of arch
+    
+    arch_1_outliers (numpy array nx2): array of outliers for the first quarter of arch
+    
+    arch_2_inliers (numpy array nx2): array of inliers for the second quarter of arch
+    
+    arch_2_outliers (numpy array nx2): array of outliers for the second quarter of arch
+    
+    x1_masked (list): list of the x coordinates that represnt the best fit first quarter of arch
+    
+    y1_masked (list): list of the y coordinates that represnt the best fit first quarter of arch
+    
+    x2_masked (list): list of the x coordinates that represnt the best fit second quarter of arch
+    
+    y2_masked (list): list of the y coordinates that represnt the best fit second quarter of arch
+    
+    """
    
     x1_masked,y1_masked,error_1=first_quarter_circle(radius,center_x,center_y,center_distance,True,arch_1[:,0],arch_1[:,1])
     x2_masked,y2_masked,error_2=second_quarter_circle(radius,center_x,center_y,center_distance,True,arch_2[:,0],arch_2[:,1])
@@ -21,6 +62,36 @@ def pointed_arch (arch_1,arch_2,radius, center_distance, center_x, center_y,thre
     return d,arch_1_inliers,arch_1_outliers,arch_2_inliers,arch_2_outliers,x1_masked,y1_masked,x2_masked,y2_masked
   
 def first_quarter_circle(radius, center_x, center_y, center_distance, compute_error=False, point_x=0, point_y=0):
+    """
+    This function allow to calculate the curve of the first quarter arch as well as its error
+        
+    Parameters:
+    ----------
+      
+    radius (float): radius used for generating the pointed arch
+    
+    center_x (float): x coodinate of the center of the first quarter of arch
+    
+    center_y (float): y coordinate of the center of the first quarter of arch
+    
+    center_distance (float): distance between the center of the first and second quarter of arch
+    
+    compute_error (bool): true if the error is computed. Default: true
+    
+    point_x (list): list of points (x coordinates) used for calculating the error
+    
+    point_y (list): list of points (y coordinates) used for calculating the error
+    
+    Returns:
+    ----------
+       
+    x1_masked (list): list of the x coordinates that represnt the best fit first quarter of arch
+    
+    y1_masked (list): list of the y coordinates that represnt the best fit first quarter of arch
+    
+    error (list): list with the value of error of each point (point_x,point_y)
+    
+    """
     # Plotting the first quarter circle segment
     theta = np.linspace(0, np.pi / 2, 1000)
     x1 = radius * np.cos(theta) + center_x
@@ -48,6 +119,36 @@ def first_quarter_circle(radius, center_x, center_y, center_distance, compute_er
     return x1_masked, y1_masked, error
 
 def second_quarter_circle (radius,center_x,center_y,center_distance,compute_error=False,point_x=0,point_y=0):
+    """
+    This function allow to calculate the curve of the second quarter arch as well as its error
+        
+    Parameters:
+    ----------
+      
+    radius (float): radius used for generating the pointed arch
+    
+    center_x (float): x coodinate of the center of the second quarter of arch
+    
+    center_y (float): y coordinate of the center of the second quarter of arch
+    
+    center_distance (float): distance between the center of the first and second quarter of arch
+    
+    compute_error (bool): true if the error is computed. Default: true
+    
+    point_x (list): list of points (x coordinates) used for calculating the error
+    
+    point_y (list): list of points (y coordinates) used for calculating the error
+    
+    Returns:
+    ----------
+       
+    x2_masked (list): list of the x coordinates that represnt the best fit second quarter of arch
+    
+    y2_masked (list): list of the y coordinates that represnt the best fit second quarter of arch
+    
+    error (list): list with the value of error of each point (point_x,point_y)
+    
+    """
     # Plotting the second quarter circle segment
     theta = np.linspace(0, np.pi/2, 1000)
     x2 = radius * np.cos(np.pi - theta) + center_x + center_distance
@@ -81,6 +182,7 @@ class RANSAC:
         
     Parameters:
     ----------
+    
     x_data (list): list with the input coordinates of the model [x1
                                                                   x2]
     
@@ -89,9 +191,12 @@ class RANSAC:
     
     n (int): number of iterations for RANSAC
     
+    d_min (int): minimum number of inliers to consider the model as valid. Less number of inliers in a model (iteration) make this model unuseful
+    
     dt (float): distance threshold. If a point has a distance to the fitted curve hihger than this value the algorithm will consider it as outlier
     
-    type_curve (string): type of curve to fit. Types: circle
+    type_curve (string): type of curve to fit. Types: Circular arch, Pointed arch
+    
     """
     def __init__(self, x_data, y_data, n,d_min,dt,type_curve):
         self.x_data = x_data
@@ -127,6 +232,7 @@ class RANSAC:
             
         Returns
         -------
+        
         sample (list): list with the random sampled points [x2 y2
                                                                 x3 y3]
         """
@@ -152,11 +258,13 @@ class RANSAC:
             
         Parameters
         -------
+        
         sample (list): list with the random sampled points [x2 y2
                                                                 x3 y3]
         
         Returns
         -------
+        
         parameters of the curve. For circle c_x (float),c_y (float),r (float)
         """
         if self.tc == "Circular arch":
@@ -181,11 +289,13 @@ class RANSAC:
             
         Parameters
         -------
+        
         sample (list): list with the random sampled points [x2 y2
                                                                 x3 y3]
         
         Returns
         -------
+        
         d (int): number of inliers. Higher number indicates better model.
         outliers (list): coordinates of the outliers [x1 y1
                                                       x2 y2]
@@ -222,6 +332,7 @@ class RANSAC:
         
         Returns
         -------
+        
         d_best (int): number of inliers of the best mode
         outliers (list): coordinates of the outliers [x1 y1
                                                       x2 y2]
