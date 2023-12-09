@@ -29,7 +29,6 @@ additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\main_module'
 
 sys.path.insert(0, additional_modules_directory)
 from main import P2p_getdata,get_istance,extract_longitudinal_axis, minBoundingRect, extract_points_within_tolerance
-from pointed_arch_equations import first_quarter_circle, second_quarter_circle, pointed_arch
 from ransac import RANSAC
 
 
@@ -146,7 +145,7 @@ label_iterations_ransac=tk.Label(form_frame, text="Number of iteration for RANSA
 label_iterations_ransac.grid(row=3, column=0, sticky="w",pady=2)
 
 label_min_samples=tk.Label(form_frame, text="Minimum number of samples for fitting the model:")
-label_iterations_ransac.grid(row=4, column=0, sticky="w",pady=2)
+label_min_samples.grid(row=4, column=0, sticky="w",pady=2)
 
 label_fix=tk.Label(form_frame, text="Fixed springing line:")
 label_fix.grid(row=5, column=0, sticky="w",pady=2)

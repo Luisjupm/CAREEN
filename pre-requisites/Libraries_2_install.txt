@@ -2,4 +2,4 @@
 "C:\Program Files\CloudCompare\plugins\Python\python.exe" -m pip install scikit-learn==1.1.0
 "C:\Program Files\CloudCompare\plugins\Python\python.exe" -m pip install pandas
 "C:\Program Files\CloudCompare\plugins\Python\python.exe" -m pip install matplotlib
-
+"C:\Program Files\CloudCompare\plugins\Python\python.exe" -m pip install open3d
