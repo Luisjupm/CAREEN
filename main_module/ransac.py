@@ -198,7 +198,7 @@ class RANSAC:
     type_curve (string): type of curve to fit. Types: Circular arch, Pointed arch
     
     """
-    def __init__(self, x_data, y_data, n,d_min,dt,type_curve):
+    def __init__(self, x_data, y_data, n,d_min,dt,type_curve,midpoint=0):
         self.x_data = x_data
         self.y_data = y_data
         self.n = n
@@ -210,8 +210,9 @@ class RANSAC:
         self.best_x_coordinates = None
         self.best_y_coordinates = None
         if self.tc=="Pointed arch":
-            # Splitting the arch in two parts based on a specific criteria. This is to make a random sample on each half and perform a circle fitting
-            midpoint = sum(x_data) / len(x_data) 
+            if midpoint==0:
+                # Splitting the arch in two parts based on a specific criteria. This is to make a random sample on each half and perform a circle fitting
+                midpoint = sum(x_data) / len(x_data) 
             
             # First part of the arch
             filtered_x_data_1 = [x for x in x_data if x >= midpoint]
@@ -224,7 +225,6 @@ class RANSAC:
             filtered_y_data_2 = [y for i, y in enumerate(y_data) if x_data[i] < midpoint]
             # Combine filtered_x_data and filtered_y_data into a single array (arch_1)
             self.arch_2 = np.array(list(zip(filtered_x_data_2, filtered_y_data_2)))
-
             
     def random_sampling(self):
         """
@@ -239,7 +239,7 @@ class RANSAC:
         sample = []
         save_ran = []
         count = 0
-        if self.tc == "Circular arch" or self.tc == "Pointed arch":
+        if self.tc == "Circular arch" or self.tc == "Pointed arch" or self.tc=="Quarter arch":
             max_count=3
             # get three points from data
         while True:
@@ -267,7 +267,7 @@ class RANSAC:
         
         parameters of the curve. For circle c_x (float),c_y (float),r (float)
         """
-        if self.tc == "Circular arch":
+        if self.tc == "Circular arch" or self.tc=="Quarter arch":
             # calculate A, B, C value from three points by using matrix
             pt1 = sample[0]
             pt2 = sample[1]
@@ -305,7 +305,7 @@ class RANSAC:
         d = 0
         outliers=[]
         inliers=[]
-        if self.tc == "Circular arch":
+        if self.tc == "Circular arch" or self.tc=="Quarter arch":
             c_x, c_y, r = model
             # Evaluation of the error by measuring the distance of the point with respect to the circle
             for i in range(len(self.x_data)):
@@ -339,7 +339,7 @@ class RANSAC:
         inliers (list): coordinates of the inliers [x1 y1
                                                       x2 y2]
         """
-        if self.tc == "Circular arch":
+        if self.tc == "Circular arch" or self.tc == "Quarter arch":
             # find best model performing n interations
             for i in range(self.n):
                 # make one model each new iteration
@@ -353,16 +353,31 @@ class RANSAC:
             d_best,best_outliers,best_inliers = self.eval_model(self.best_model) 
             
             # get best model from ransac and store the data for plotting the best fit curve
-            a, b, r = self.best_model[0], self.best_model[1], self.best_model[2]  
-            # Calculate the x and y coordinates of points on the upper half of the circle for plotting
-            angles = np.linspace(0, np.pi, 100)
-            self.best_x_coordinates = a + r * np.cos(angles)
-            self.best_y_coordinates = b + r * np.sin(angles)
+            a, b, r = self.best_model[0], self.best_model[1], self.best_model[2] 
+            if self.tc=="Circular arch":
+                # Calculate the x and y coordinates of points on the upper half of the circle for plotting
+                angles = np.linspace(0, np.pi, 100)
+                self.best_x_coordinates = a + r * np.cos(angles)
+                self.best_y_coordinates = b + r * np.sin(angles)
+            else:
+                # Concatenate coordinates to check the direciton of the arch                
+                max_y_data=max(self.y_data)
+                min_y_data=min(self.y_data)
+                max_x_data=self.x_data[self.y_data ==  max_y_data]
+                min_x_data=self.x_data[self.y_data ==  min_y_data]
+                angles = np.linspace(0,np.pi/2, 100)
+                self.best_x_coordinates = a + r * np.cos(angles)
+                self.best_y_coordinates = b + r * np.sin(angles)
+                if max_x_data>min_x_data:                                  
+                    # Horizontal symmetry: Mirror the x-coordinates
+                    symmetric_x_coordinates = 2 * a - self.best_x_coordinates
+                    self.best_x_coordinates=symmetric_x_coordinates
+                              
         elif self.tc=="Pointed arch":
             
             # find best model performing n interations
             for i in range(self.n):
-                # make one model each new iteration: in the model is splitted in two part by the __init__ then we evaluate each part as a quarter of circle
+
                 
                 # best fit paramenters for the first quarter of arch based on a random sampling of 3 points
                 ransac1 = RANSAC(self.arch_1[:,0],self.arch_1[:,1],1,3,9999,'Circular arch')    
@@ -386,7 +401,7 @@ class RANSAC:
                 # If the first quarter is placed after the second quarter, it could be a pointed arch. So, we perform the curve of the pointed arche as well as its inliers and outliers and number (d) of inliers
                     center_distance=a2-a1
                     d_temp,arch_1_inliers,arch_1_outliers,arch_2_inliers,arch_2_outliers,_,_,_,_=pointed_arch (self.arch_1,self.arch_2,rm, center_distance, a1, bm,self.dt)
-                # if the number of inliers (d_temp) is largeer than the minimum of inliers that the user define and is larger than the best number of inliers. The model is the better than the previous one
+                # if the number of inliers (d_temp) is larger than the minimum of inliers that the user define and is larger than the best number of inliers. The model is the better than the previous one
                 if self.d_min < d_temp and self.d_best < d_temp:
                     self.best_model = [rm,center_distance,a1,bm]
                     self.d_best = d_temp
@@ -396,6 +411,7 @@ class RANSAC:
             self.best_x_coordinates=np.vstack((x_1_masked_best, x_2_masked_best))
             self.best_y_coordinates=np.vstack((y_1_masked_best, y_2_masked_best))
             best_inliers=np.vstack((self.arch_1_best_inliers, self.arch_2_best_inliers))
-            best_outliers=np.vstack((self.arch_1_best_outliers, self.arch_2_best_outliers))           
+            best_outliers=np.vstack((self.arch_1_best_outliers, self.arch_2_best_outliers))                 
+   
                     
         return d_best,best_outliers,best_inliers

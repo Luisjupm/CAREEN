@@ -36,12 +36,15 @@ from ransac import RANSAC
 def run_algorithm():
     ## STORE THE INPUT VARIABLES
     Tolerance=float(entry_tolerance.get())
-    cal_type=str(combo_type.get())
-    type_arch=str(combo_type.get())
     num_iter_ransac=int(entry_iterations_ransac.get())
     threhold_ransac=float(entry_threshold_ransac.get())    
     type_data, number = get_istance()
     d_min=int(entry_minimum_samples.get())
+    if checkbox2_var.get(): 
+        if entry_percent_fix.get()=='':
+            raise RuntimeError("Please introduce a value for the percent of points to consider. Example: 10 for 10% of the total points")
+        else:
+            percent=float(entry_percent_fix.get())  
     if type_data=='point_cloud':
         raise RuntimeError("Please select the folder that contains the point clouds")          
     ## EXTRACT THE NUMBER OF CLOUDS IN THE SELECTED FOLDER
@@ -51,10 +54,6 @@ def run_algorithm():
     else:
         entities = CC.getSelectedEntities()[0]
         number = entities.getChildrenNumber()
-    # Create a empty list to store the results
-    data = []
-
-
     ## LOOP OVER EACH ELEMENT AND PERFORM THE RANSAC
     for i in range(number):
         # Get the point cloud selected as a pandas frame
@@ -62,13 +61,49 @@ def run_algorithm():
         pc = entities.getChild(i)
         pcd=P2p_getdata(pc,False,False,True)
         pcd_f,skeleton =extract_points_within_tolerance(pcd[['X','Y','Z']].values, Tolerance,True)
-        
+        if checkbox2_var.get(): # In case of having fixed springs
+            # Calculate the threshold because we chosen the fix springs option
+            difference_height=(pcd_f[:,2].max()-pcd_f[:,2].min())*(percent/100)
+            threshold_height = difference_height + (pcd_f[:,2].min())
+            # Filter the DataFrame based on the condition
+            filtered_pcd_f = pcd_f[pcd_f[:,2] < threshold_height]
+            if len (filtered_pcd_f)<6 or len (filtered_pcd_f)<d_min:
+               raise RuntimeError("The treshold is too restrictive. At least one of the arches has less than 6 points or less than the number of minimum points for fitting the model. Please increse the percentage value") 
+            # Create a istance of RANSAC depending on the type of arch (combo_type.get())
+            if combo_type.get()=="Pointed arch":                
+                midpoint = sum(pcd_f[:,0]) / len(pcd_f[:,0])
+            ransac = RANSAC(filtered_pcd_f[:,0],filtered_pcd_f[:,2],num_iter_ransac,d_min,threhold_ransac,combo_type.get(),midpoint)  
+        else: # In case of not having fixed springs
 
-        # Create a istance of RANSAC depending on the type of arch (combo_type.get())
-        ransac = RANSAC(pcd_f[:,0],pcd_f[:,2],num_iter_ransac,d_min,threhold_ransac,combo_type.get())  
+            # Create a istance of RANSAC depending on the type of arch (combo_type.get())
+            ransac = RANSAC(pcd_f[:,0],pcd_f[:,2],num_iter_ransac,d_min,threhold_ransac,combo_type.get())  
         # # execute ransac algorithm
-        _,outliers,inliers=ransac.execute_ransac()              
-        # Create the plot for inliers and outliers
+        _,outliers,inliers=ransac.execute_ransac() 
+        if checkbox2_var.get() and combo_type.get()=="Circular arch" or combo_type.get()=="Quarter arch": # In case of having fixed springs
+            # initialize the inliers and outliers lists
+            inliers=[]
+            outliers=[]
+            # get best model from ransac and store the data for plotting the best fit curve
+            a, b, r = ransac.best_model[0], ransac.best_model[1], ransac.best_model[2] 
+            # compute the error between the whole data and the best model. This model was obtained from the reduced data
+            for ii in range(len(pcd_f)):
+                dis = np.sqrt((pcd_f[ii,0]-a)**2 + (pcd_f[ii,2]-b)**2)
+                if dis >= r:
+                    distance=dis - r
+                else:
+                    distance= r - dis   
+                if distance > threhold_ransac:
+                    outliers.append(pcd_f[ii,:])
+                else:
+                    inliers.append(pcd_f[ii,:]) 
+            # Creating a NumPy array to be compatible with the rest of the code
+            if len (inliers)>0:
+                inliers_array = np.array(inliers)
+                inliers = inliers_array [:, [0, 2]]
+            if len (outliers)>0:
+                outliers_array = np.array(outliers)
+                outliers = outliers_array [:, [0, 2]]
+        ## CREATE THE PLOT
         if len (inliers)>0:
             plt.scatter(inliers[:,0], inliers[:,1],color='g', label='Points consider as inliers')
         if len (outliers)>0:
@@ -88,6 +123,8 @@ def run_algorithm():
             plt.savefig(save_path_textbox.get()+'/circular_arch_'+str(i)+'.png')
         elif combo_type.get()=="Pointed arch":
             plt.savefig(save_path_textbox.get()+'/pointed_arch_'+str(i)+'.png')
+        elif combo_type.get()=="Quarter arch":
+            plt.savefig(save_path_textbox.get()+'/quarter_arch_'+str(i)+'.png')            
        
         # Clear the plot for the next iteration
         plt.clf()        
@@ -116,7 +153,7 @@ def toggle_entry_state():
         entry_percent_fix.config(state="normal")
     else:
         label_percent_fix.config(state="disabled")  # Make the entry read-only    
-        entry_percent_fix.config(state="normal")
+        entry_percent_fix.config(state="disabled")
 #%% GUI
 # Create the main window
 window = tk.Tk()
@@ -172,7 +209,7 @@ checkbox_2.grid (row=5, column=1, sticky="e",pady=2)
 
 
 # Combox
-algorithms = ["Circular arch","Pointed arch"]
+algorithms = ["Circular arch","Pointed arch","Quarter arch"]
 combo_type = ttk.Combobox(form_frame, values=algorithms, state="readonly")
 combo_type.current(0)
 combo_type.grid(row=1, column=1, sticky="e",pady=2)
