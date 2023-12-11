@@ -47,15 +47,13 @@ def run_algorithm():
         raise RuntimeError("No folder or entity selected")
     else:
         # Load the selected point cloud. If the entity has the attribute points is a folder. Otherwise is a point cloud
-        if hasattr (entities, 'points'):
-            
+        if hasattr (entities, 'points'):            
             pc=entities
         else:            
             for ii, item in enumerate (name_list):
                 if item== combo1.get():
                     pc = entities.getChild(ii)
                     break 
-            print ("hola")
         if hasattr(pc, 'points'): # If there is selection and the selected entity is a point
             # Transform the selected point cloud to a open3d point cloud
             pcd = o3d.geometry.PointCloud()            
