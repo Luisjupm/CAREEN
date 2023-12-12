@@ -93,7 +93,7 @@ class GUI:
         label_algo.grid(row=1, column=0, sticky=tk.W) 
         label_fea = tk.Label(tab1, text="Select the features to include:")
         label_fea.grid(row=2, column=0, sticky=tk.W) 
-        label_out= ttk.Label(tab1, text="Choose output directory")
+        label_out= ttk.Label(tab1, text="Choose output directory_")
         label_out.grid(row=3, column=0, sticky=tk.W)
         
         # Combobox
