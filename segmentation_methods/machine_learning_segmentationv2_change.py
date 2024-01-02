@@ -203,11 +203,11 @@ class GUI:
 
         # Entry
         t1_entry_features = ttk.Entry(tab1, width=10)
-        t1_entry_features.insert(0,self.set_up_parameters_of[0])
+        t1_entry_features.insert(0,self.set_up_parameters_of[1])
         t1_entry_features.grid(row=3, column=1, sticky="e", pady=2)
         
         t1_entry_cv = ttk.Entry(tab1, width=10)
-        t1_entry_cv.insert(0,self.set_up_parameters_of[1])
+        t1_entry_cv.insert(0,self.set_up_parameters_of[2])
         t1_entry_cv.grid(row=4, column=1, sticky="e", pady=2)
         
         self.entry_widget = ttk.Entry(tab1, width=30)
@@ -271,14 +271,14 @@ class GUI:
         # Button
         t2_setup_button= ttk.Button (tab2, text="Set-up", command=lambda: self.show_set_up_window(t2_combo_3.get()), width=10)
         t2_setup_button.grid (row=2,column=2,sticky="e",padx=100)
-        t2_features_button= ttk.Button (tab2, text="...", command=lambda: self.load_features_dialog(), width=10)
+        t2_features_button= ttk.Button (tab2, text="...", command=lambda: self.load_features_dialog, width=10)
         t2_features_button.grid (row=3,column=2,sticky="e",padx=100)
         t2_configuration= ttk.Button (tab2, text="...", command=lambda: self.load_configuration_dialog(), width=10)
         t2_configuration.grid(row=4,column=2,sticky="e",padx=100)
         t2_output = ttk.Button(tab2, text="...", command=self.save_file_dialog, width=10)
         t2_output.grid(row=5, column=2, sticky="e", padx=100)
     
-        t2_run_button= ttk.Button (tab2, text="Run", command=self.run_algorithm_2(t2_combo_1.get(),t2_combo_2.get(),t2_combo_3.get()), width=10)
+        t2_run_button= ttk.Button (tab2, text="Run", command=lambda:self.run_algorithm_2(t2_combo_1.get(),t2_combo_2.get(),t2_combo_3.get()), width=10)
         t2_run_button.grid (row=6,column=1,sticky="e",padx=100)
         t2_cancel_button= ttk.Button (tab2, text="Cancel", command=self.destroy,width=10)
         t2_cancel_button.grid (row=6,column=1,sticky="e")
@@ -314,7 +314,7 @@ class GUI:
         t3_output = ttk.Button(tab3, text="...", command=self.save_file_dialog, width=10)
         t3_output.grid(row=3, column=2, sticky="e", padx=100)
 
-        t3_run_button= ttk.Button (tab3, text="OK", command=self.run_algorithm_3(t3_combo_1.get()), width=10)
+        t3_run_button= ttk.Button (tab3, text="OK", command=lambda:self.run_algorithm_3(t3_combo_1.get()), width=10)
         t3_run_button.grid (row=4,column=1,sticky="e",padx=100)
         t3_cancel_button= ttk.Button (tab3, text="Cancel", command=self.destroy,width=10)
         t3_cancel_button.grid (row=4,column=1,sticky="e")
