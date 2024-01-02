@@ -273,7 +273,7 @@ class GUI:
         t2_setup_button.grid (row=2,column=2,sticky="e",padx=100)
         t2_features_button= ttk.Button (tab2, text="...", command=lambda: self.load_features_dialog, width=10)
         t2_features_button.grid (row=3,column=2,sticky="e",padx=100)
-        t2_configuration= ttk.Button (tab2, text="...", command=lambda: self.load_configuration_dialog(), width=10)
+        t2_configuration= ttk.Button (tab2, text="...", command=lambda: self.load_configuration_dialog, width=10)
         t2_configuration.grid(row=4,column=2,sticky="e",padx=100)
         t2_output = ttk.Button(tab2, text="...", command=self.save_file_dialog, width=10)
         t2_output.grid(row=5, column=2, sticky="e", padx=100)
