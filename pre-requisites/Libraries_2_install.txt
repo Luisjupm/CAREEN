@@ -4,3 +4,7 @@
 "C:\Program Files\CloudCompare\plugins\Python\python.exe" -m pip install matplotlib
 "C:\Program Files\CloudCompare\plugins\Python\python.exe" -m pip install open3d
 "C:\Program Files\CloudCompare\plugins\Python\python.exe" -m pip install fuzzy-c-means
+"C:\Program Files\CloudCompare\plugins\Python\python.exe" -m pip install yellowbrick
+"D:\CloudCompare\plugins\Python\python.exe" -m pip install opencv-python
+
+

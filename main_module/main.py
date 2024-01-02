@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 import os
 import datetime
 import sys
+import math
 
 #%% FUNCTIONS
 def P2p_getdata (pc,nan_value=False,sc=True,color=True):
@@ -307,9 +308,9 @@ def rotate_point_cloud_3d(point_cloud, angle_deg):
         
     Parameters:
     ----------
-    point_cloud (list): list with the 3D point cloud coordinates [x1,y1,z1
+    point_cloud (numpy array): list with the 3D point cloud coordinates [x1,y1,z1
                                                                   x2,y2,z2]
-    angle_deg (float): the angle of the point cloud with respect to a reference
+    angle_deg (float): the angle of the point cloud with respect to a reference. In degrees
     
     Returns
     -------
@@ -331,6 +332,7 @@ def rotate_point_cloud_3d(point_cloud, angle_deg):
     # Apply the rotation matrix to the point cloud
     rotated_point_cloud = np.dot(point_cloud, rotation_matrix)
     return rotated_point_cloud
+
 
 def extract_points_within_tolerance(point_cloud, tolerance,rot):
     """

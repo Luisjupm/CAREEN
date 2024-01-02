@@ -1,154 +1,77 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Oct 18 18:07:07 2023
+Created on Sun Dec 31 11:50:01 2023
 
-@author: Luisja
+@author: LuisJa
 """
 
-import tkinter as tk
-
-import cccorelib
-import pycc
-
-import pandas as pd
 import numpy as np
-from scipy.spatial import ConvexHull
-from scipy.spatial import distance
-from scipy.optimize import fsolve
-from itertools import combinations
-from sklearn.decomposition import PCA
-import matplotlib.pyplot as plt
-from tkinter import ttk
-from tkinter import filedialog
+import py4dgeo
 
-import os 
-import sys
-# ADDING THE MAIN MODULE FOR ADDITIONAL FUNCTIONS
+epoch1, epoch2 = py4dgeo.read_from_las(
+    "ahk_2017_652900_5189100_gnd_subarea.laz",
+    "ahk_2018A_652900_5189100_gnd_subarea.laz",
+    additional_dimensions={"point_source_id": "scanpos_id"},
+)
 
-script_directory = os.path.abspath(__file__)
-path_parts = script_directory.split(os.path.sep)
+with open(py4dgeo.find_file("sps.json"), "r") as load_f:
+    scanpos_info_dict = eval(load_f.read())
+epoch1.scanpos_info = scanpos_info_dict
+epoch2.scanpos_info = scanpos_info_dict
 
-additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\main_module'
-print (additional_modules_directory)
-sys.path.insert(0, additional_modules_directory)
-from main import P2p_getdata,get_istance, get_point_clouds_name
+corepoints = py4dgeo.read_from_las("ahk_cp_652900_5189100_subarea.laz").cloud
 
-name_list =get_point_clouds_name ()
-
-def on_select(event):
-    selected_name = combo_e1.get()
-    selected_name = combo_e2.get()
-def toggle_entry_state():
-    if checkbox_1_var.get():
-        entry_normal.config(state=tk.NORMAL)
-    else:
-        entry_normal.config(state=tk.DISABLED)
-    if checkbox_2_var.get():
-        combo_core.config(state=tk.NORMAL)
-        label_core.config(state=tk.NORMAL)
-    else:
-        combo_core.config(state=tk.DISABLED)
-        label_core.config(state=tk.DISABLED)
-def destroy():
-    window.destroy()  # Close the window    
+Cxx = np.loadtxt(py4dgeo.find_file("Cxx.csv"), dtype=np.double, delimiter=",")
+tfM = np.loadtxt(py4dgeo.find_file("tfM.csv"), dtype=np.double, delimiter=",")
+refPointMov = np.loadtxt(
+    py4dgeo.find_file("redPoint.csv"), dtype=np.float64, delimiter=","
+)
 
 
-# Create the main window
-window = tk.Tk()
+m3c2_ep = py4dgeo.M3C2EP(
+    epochs=(epoch1, epoch2),
+    corepoints=corepoints,
+    normal_radii=(0.5, 1.0, 2.0),
+    cyl_radii=(0.5,),
+    max_distance=3.0,
+    Cxx=Cxx,
+    tfM=tfM,
+    refPointMov=refPointMov,
+)
 
-window.title("M3C2EP-Change detection for 3D point clouds")
-# Disable resizing the window
-window.resizable(False, False)
-# Remove minimize and maximize buttons (title bar only shows close button)
-window.attributes('-toolwindow', 1)
+# distances, uncertainties, covariance = m3c2_ep.run()
 
-# Create a frame for the form
-form_frame = tk.Frame(window, padx=10, pady=10)
-form_frame.pack()
+# distances[0:8]
+# uncertainties["lodetection"][0:8]
 
-
-
-# Labels for the algorithms
-label_tolerance = tk.Label(form_frame, text="Epoch #1:")
-label_tolerance.grid(row=0, column=0, sticky="w",pady=2)
-
-label_degree=tk.Label(form_frame, text="Epoch #2:")
-label_degree.grid(row=1, column=0, sticky="w",pady=2)
-
-#Labels for different parts
-label_scales = tk.Label(form_frame, text="Scales")
-label_scales.grid(row=2, column=0, sticky="w",pady=2)
-
-checkbox1_label = tk.Label(form_frame, text="Calculate normals")
-checkbox1_label.grid (row=3, column=0, sticky="w",pady=2,padx=25)
-
-label_normal = tk.Label(form_frame, text="Normals:")
-label_normal.grid(row=4, column=0, sticky="w",pady=2,padx=25)
-
-label_diameter_of_cylinder = tk.Label(form_frame, text="Diameter of cylinder:")
-label_diameter_of_cylinder.grid(row=5, column=0, sticky="w",pady=2,padx=25)
-
-label_diameter_of_cylinder = tk.Label(form_frame, text="Lenght of cylinder:")
-label_diameter_of_cylinder.grid(row=6, column=0, sticky="w",pady=2,padx=25)
-
-label_use_core = tk.Label(form_frame, text="Use core points:")
-label_use_core.grid(row=7, column=0, sticky="w",pady=2)
-
-label_core = tk.Label(form_frame, text="Core points:")
-label_core.grid(row=8, column=0, sticky="w",pady=2,padx=25)
-label_core.config(state=tk.DISABLED)
-# Combobox
-combo_e1 = ttk.Combobox(form_frame, values=name_list)
-combo_e1.set("Select the point cloud of epoch #1")
-combo_e1.grid(row=0, column=1, sticky="w",pady=2)
-
-combo_e2 = ttk.Combobox(form_frame, values=name_list)
-combo_e2.set("Select the point cloud of epoch #2")
-combo_e2.grid(row=1, column=1, sticky="w",pady=2)
-
-combo_core = ttk.Combobox(form_frame, values=name_list)
-combo_core.set("Select the point cloud of core points")
-combo_core.grid(row=8, column=1, sticky="w",pady=2)
-combo_core.config(state=tk.DISABLED)
-
-label_use_core = tk.Label(form_frame, text="Uncertainities:")
-label_use_core.grid(row=7, column=0, sticky="w",pady=2)
-
-label_use_core = tk.Label(form_frame, text="Laser scanner uncertainity")
-label_use_core.grid(row=7, column=0, sticky="w",pady=25)
+# import matplotlib.cm as cm
+# import matplotlib.pyplot as plt
 
 
+# def plt_3d(corepoints, distances):
+#     fig, ax = plt.subplots(figsize=(10, 10), subplot_kw={"projection": "3d"})
 
-# Checkbox
-# Variables de control para las opciones
-checkbox_1_var = tk.BooleanVar()
-checkbox_1 = tk.Checkbutton(form_frame, variable=checkbox_1_var, command=toggle_entry_state)
-checkbox_1.grid (row=3, column=1, sticky="e",pady=2)
+#     # add axis labels
+#     ax.set_xlabel("X [m]")
+#     ax.set_ylabel("Y [m]")
+#     ax.set_zlabel("Z [m]")
 
-checkbox_2_var = tk.BooleanVar()
-checkbox_2 = tk.Checkbutton(form_frame, variable=checkbox_2_var, command=toggle_entry_state)
-checkbox_2.grid (row=7, column=1, sticky="e",pady=2)
+#     # plot the corepoints colored by their distance
+#     x, y, z = np.transpose(corepoints)
+#     vmin = np.min(distances)
+#     vmax = np.max(distances)
+#     pts = ax.scatter(
+#         x, y, z, s=10, c=distances, vmin=vmin, vmax=vmax, cmap=cm.seismic_r
+#     )
 
-# Entries
-entry_normal = tk.Entry(form_frame,width=5)
-entry_normal.insert(0,0.20)
-entry_normal.grid(row=4, column=1, sticky="e",pady=2)
+#     # add colorbar
+#     cmap = plt.colorbar(pts, shrink=0.5, label="Distance [m]", ax=ax)
 
+#     # add title
+#     ax.set_title("Visualize Changes")
 
-# Entries
-entry_normal = tk.Entry(form_frame,width=5)
-entry_normal.insert(0,0.20)
-entry_normal.grid(row=4, column=1, sticky="e",pady=2)
-entry_normal.config(state=tk.DISABLED)
-
-entry_diameter_of_cylinder = tk.Entry(form_frame,width=5)
-entry_diameter_of_cylinder.insert(0,1)
-entry_diameter_of_cylinder.grid(row=5, column=1, sticky="e",pady=2)
-
-entry_lenght_of_cylinder = tk.Entry(form_frame,width=5)
-entry_lenght_of_cylinder.insert(0,3)
-entry_lenght_of_cylinder.grid(row=6, column=1, sticky="e",pady=2)
-
-
-# Start the main event loop
-window.mainloop()
+#     ax.set_aspect("equal")
+#     ax.view_init(22, 113)
+#     plt.show()
+    
+# plt_3d(corepoints, distances)

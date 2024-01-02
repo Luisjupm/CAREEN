@@ -330,7 +330,65 @@ class GUI:
 
 
     def run_algorithm_1 (self,algo,training_pc_name): 
-        
+        # Error to prevent the abscene of point cloud
+        CC = pycc.GetInstance() 
+        type_data, number = get_istance()
+        if type_data=='point_cloud' or type_data=='folder':
+            pass
+        else:
+            raise RuntimeError("Please select a folder that contains points clouds or a point cloud")        
+        if number==0:
+            raise RuntimeError("There are not entities in the folder")
+        else:
+            entities = CC.getSelectedEntities()[0]
+            number = entities.getChildrenNumber()
+            
+        if type_data=='point_cloud':
+            pc_training=entities
+        else:
+            for ii, item in enumerate(name_list):
+                if item == training_pc_name:
+                    pc_training = entities.getChild(ii)
+                    break
+        pcd=P2p_getdata(pc_training,False,False,True)
+        pcd_f=pcd[self.features2include].values 
+
+        # Error control to prevent not algorithm for the training
+        if algo=="Not selected": """AQUI YA PONES LAS OPCIONES DE ALGORITMOS, COM OSE PASA POR LA VARIABEL ALGO LO SABEMOS"""
+            raise RuntimeError ("Please select and algorithm for the training")
+        elif algo=="K-means":
+            """PONER EL CODIGO DE EJECUCIÓN DEL CMD O EL QUE CORRESPONDA"""
+        elif algo=="Fuzzy-K-means":
+           
+        elif algo=="DBSCAN":
+            
+        elif algo=="OPTICS":
+          """EN CASO DE CMD AQUI PONDRÍAS EJECUTARLA, JUSTO DESPUES CREAR LA NUBE DE PUNTOS RESULTANTE"""  
+            
+                         
+        ## CREATE THE RESULTING POINT CLOUD 
+        pc_results = pycc.ccPointCloud(pcd['X'], pcd['Y'], pcd['Z'])
+        pc_results.setName("Results_from_clustering")
+        idx = pc_results.addScalarField("Clusters",labels) 
+        # STORE IN THE DATABASE OF CLOUDCOMPARE
+        CC.addToDB(pc_results)
+        CC.updateUI() 
+        # SAVE THE CONFIGURATION FILE AS WELL AS THE FEATURES2INCLUDE FOR PREDICTION  
+        # Join the list items with commas to create a comma-separated string
+        comma_separated = ','.join(self.features2include)    
+        # Write the comma-separated string to a text file
+        with open(os.path.join(self.file_path, 'features.txt'), 'w') as file:
+            file.write(comma_separated)  
+        with open(os.path.join(self.file_path,'config.pkl'), 'wb') as file:
+            pickle.dump(config_algo, file) 
+        if algo=="K-means" or algo=="Fuzzy-K-means":
+            # Create figures of the results in case of K-means and Fuzzy K-means
+            # Silhouette graph
+            model = KMeans(n_init='auto')
+            visualizer = SilhouetteVisualizer(model, colors='yellowbrick')
+            visualizer.fit(pcd_f)        # Fit the data to the visualizer
+            visualizer.show(os.path.join(self.file_path,'silhouette_graph.png'))
+            print("The process has been finished")        
 
         print("The process has been finished")
 # START THE MAIN WINDOW        
