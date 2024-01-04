@@ -39,11 +39,12 @@ config_file=os.path.join(current_directory,r'..\configs\executables.yml')
 # Read the configuration from the YAML file for the set-up
 with open(config_file, 'r') as yaml_file:
     config_data = yaml.safe_load(yaml_file)
-path_optimal_flow= os.path.join(current_directory,config_data.get('OPTIMAL_FLOW', ''))
-path_random_forest= os.path.join(current_directory,config_data.get('RANDOM_FOREST', ''))
-path_prediction= os.path.join(current_directory,config_data.get('PREDICTION', ''))
-path_aml= os.path.join(current_directory,config_data.get('TPOT', ''))
-# INITIAL OPERATIONS
+path_optimal_flow= os.path.join(current_directory,config_data['OPTIMAL_FLOW'])
+path_random_forest= os.path.join(current_directory,config_data['RANDOM_FOREST'])
+path_prediction= os.path.join(current_directory,config_data['PREDICTION'])
+path_aml= os.path.join(current_directory,config_data['TPOT'])
+
+#%% INITIAL OPERATIONS
 name_list=get_point_clouds_name()
 
 #%% GUI
@@ -141,7 +142,7 @@ class GUI:
         # Safe the set_up_paramenters in accordance with the GUI
         def save_setup_parameters (self,algo,*params): 
             if algo=="Random Forest":
-                self.set_up_parameters_rf["estimatorors"]=params[0]
+                self.set_up_parameters_rf["estimators"]=params[0]
                 self.set_up_parameters_rf["criterion"]=params[1]
                 self.set_up_parameters_rf["trees"]=params[2]
                 self.set_up_parameters_rf["internal_node"]=params[3]
@@ -214,7 +215,7 @@ class GUI:
 
                 
                 # Entries                
-               
+        
                 entry_param1_rf= tk.Entry(set_up_window, width=10)
                 entry_param1_rf.insert(0,self.set_up_parameters_rf["estimators"])
                 entry_param1_rf.grid(row=0, column=1, sticky="e")
@@ -503,6 +504,7 @@ class GUI:
                 
             # YAML file
             yaml_of = {
+                'ALGORITHM': "Optimal-flow",
                 'INPUT_POINT_CLOUD': input_path_point_cloud,                
                 'SELECTORS_FILE': os.path.join(self.output_directory,'selected_params.txt'),
                 'OUTPUT_DIRECTORY': self.output_directory,
@@ -517,6 +519,7 @@ class GUI:
             
             # RUN THE COMMAND LINE      
             command = path_optimal_flow + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
+            print (command)
             # os.system(command)
 
         # To run the machine learning segmentation
@@ -566,7 +569,7 @@ class GUI:
                         'nj': self.set_up_parameters_rf["njobs"]
                         }
                 }                          
-                command = path_random_forest
+                command = path_random_forest + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
                 
             elif algo=="Auto Machine Learning":                
                 # Join the list items with commas to create a comma-separated string
@@ -598,7 +601,7 @@ class GUI:
                 command = path_aml + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
             
             # RUN THE COMMAND LINE
-            os.system(command)
+            os.system(command)            
 
             # CREATE THE RESULTING POINT CLOUD 
             # Load the predictions
@@ -619,17 +622,52 @@ class GUI:
             print("The process has been finished")            
         # To run the prediction of machine learning
         def run_algorithm_3 (self,pc_prediction_name,path_features,path_pickle):
+            
             # Check if the selection is a point cloud
             pc_prediction=check_input(name_list,pc_prediction_name)
+            
             # Convert to a pandasdataframe
             pcd_prediction=P2p_getdata(pc_prediction,False,True,True)
-            # Save the point cloud
-            pcd_prediction.to_csv(os.path.join(self.output_directory, 'input_point_cloud.txt'),sep=' ',header=True,index=False)
-            command= path_prediction
-            # RUN THE COMMAND LINE
-
-            # os.system(command) 
             
+            # Save the point cloud
+            pcd_prediction.to_csv(os.path.join(self.output_directory, 'input_point_cloud_prediction.txt'),sep=' ',header=True,index=False)
+            command= path_prediction
+
+            # YAML file
+            yaml = {
+                'INPUT_POINT_CLOUD': os.path.join(self.output_directory, 'input_point_cloud_prediction.txt'),  
+                'OUTPUT_DIRECTORY': self.output_directory,
+                'ALGORITHM': "Prediction",
+                'CONFIGURATION': 
+                    {
+                    'f': path_features,
+                    'p': path_pickle,
+                    }
+            } 
+            write_yaml_file (self.output_directory,yaml)    
+            # RUN THE COMMAND LINE
+            command = path_prediction + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
+            os.system(command) 
+            
+            # CREATE THE RESULTING POINT CLOUD 
+            # Load the predictions
+            pcd_prediction = pd.read_csv(os.path.join(self.output_directory,'predictions.txt'), sep=',')  # Use sep='\t' for tab-separated files       
+
+            # Select only the 'Predictions' column
+            pc_results_prediction = pycc.ccPointCloud(pcd_prediction['X'], pcd_prediction['Y'], pcd_prediction['Z'])
+            pc_results_prediction.setName("Results_from_segmentation")
+            idx = pc_results_prediction.addScalarField("Labels",pcd_prediction['Predictions']) 
+            
+            # STORE IN THE DATABASE OF CLOUDCOMPARE
+            CC = pycc.GetInstance()
+            CC.addToDB(pc_results_prediction)
+            CC.updateUI() 
+            root.destroy()
+            
+            # Revome files
+            os.remove(os.path.join(self.output_directory,'predictions.txt'))
+            os.remove(os.path.join(self.output_directory, 'input_point_cloud_prediction.txt'))
+            print("The process has been finished") 
          
                  
               

@@ -29,15 +29,15 @@ def main():
     cross_val=config_data['CONFIGURATION']['cv']
     
     # input_file=args.i
-    print("Input file located in " + input_file)
+    print("Input file located in " + str(input_file))
     # output_directory=args.o
-    print("Output file located in " + output_directory)
+    print("Output file located in " + str(output_directory))
     # selectors=args.s
-    print("Selectors chosen = " + selectors)
+    print("Selectors chosen = " + str(selectors))
     # features=args.f
-    print("Features chosen = " + features)
+    print("Features chosen = " + str(features))
     # cross_val=args.cv
-    print("Value chosen for cross validation = " + cross_val)
+    print("Value chosen for cross validation = " + str(cross_val))
     
     # Read the input file and prepare them. We delete the X,Y,Z and Classification from the features as well as the column of classification from the input point cloud
     tr = pd.read_csv(input_file,delimiter=' ')

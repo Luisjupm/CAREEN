@@ -140,6 +140,9 @@ def main():
     # Prediction
     y_pred = loaded_model.predict(X_test)
     
+    # Save the model to a file
+    joblib.dump(loaded_model, os.path.join(output_directory, 'model.pkl'))
+    
     # Create the confusion matrix
     cm= ConfusionMatrix(loaded_model, cmap='Blues')
     cm.score (X_test,y_test)
