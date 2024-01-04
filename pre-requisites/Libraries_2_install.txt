@@ -6,5 +6,5 @@
 "C:\Program Files\CloudCompare\plugins\Python\python.exe" -m pip install fuzzy-c-means
 "C:\Program Files\CloudCompare\plugins\Python\python.exe" -m pip install yellowbrick
 "D:\CloudCompare\plugins\Python\python.exe" -m pip install opencv-python
-
+"D:\CloudCompare\plugins\Python\python.exe" -m pip install PyYAML
 

@@ -48,6 +48,8 @@ sys.path.insert(0, additional_modules_directory)
 additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\segmentation_methods\tpot-0.12.1'
 sys.path.insert(0, additional_modules_directory)
 
+
+
 #%% INPUTS AT THE BEGINING
 name_list=get_point_clouds_name()
 current_directory=os.path.dirname(os.path.abspath(__file__))

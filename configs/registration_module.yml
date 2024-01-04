@@ -1,0 +1,8 @@
+## GENERAL YAML FILE
+
+# MACHINE LEARNING APP
+OPTIMAL_FLOW: 'optimal_flow-0.1.11/optimal_flow.exe'   
+RANDOM_FOREST: 'scikit-leaern-1.3.2/machine_learning.exe'   
+PREDICTION: 'scikit-leaern-1.3.2/machine_learning.exe' 
+TPOT: 'tpot-0.12.1/tpot.exe'   
+

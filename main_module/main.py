@@ -27,6 +27,7 @@ import os
 import datetime
 import sys
 import math
+import yaml
 
 #%% FUNCTIONS
 def P2p_getdata (pc,nan_value=False,sc=True,color=True):
@@ -60,6 +61,7 @@ def P2p_getdata (pc,nan_value=False,sc=True,color=True):
             scalarFieldName = pc.getScalarFieldName(i)  
             scalarField = pc.getScalarField(i).asArray()[:]              
             pcd.insert(len(pcd.columns), scalarFieldName, scalarField) 
+            pcd=pcd.copy()
     ## DELETE NAN VALUES
     if (nan_value==True):
         pcd.dropna(inplace=True)
@@ -373,3 +375,58 @@ def extract_points_within_tolerance(point_cloud, tolerance,rot):
     if rot==True:
         points_within_tolerance=rotate_point_cloud_3d(points_within_tolerance, angle_deg)
     return points_within_tolerance, skeleton
+
+def check_input (name_list,pc_name):
+    
+    """
+    This fuction allows to transform the CC point cloud to a pandas dataframe 
+        
+    Parameters
+    ----------
+    name_list(list): list of available point clouds
+    
+    pc_name (str): name of the point cloud to get the data    
+   
+    Returns
+    -------
+    pc(py.ccHObject) : The point cloud in CC format
+    """
+    
+    CC = pycc.GetInstance() 
+    type_data, number = get_istance()
+    if type_data=='point_cloud' or type_data=='folder':
+        pass
+    else:
+        raise RuntimeError("Please select a folder that contains points clouds or a point cloud")        
+    if number==0:
+        raise RuntimeError("There are not entities in the folder")
+    else:
+        entities = CC.getSelectedEntities()[0]
+        number = entities.getChildrenNumber()
+        
+    if type_data=='point_cloud':
+        pc=entities
+    else:
+        for i, item in enumerate(name_list):
+            if item == pc_name:
+                pc = entities.getChild(i)
+                break        
+    return pc
+
+def write_yaml_file(output_directory,data):
+    
+    """
+    This fuction allows to save a yaml file in a output directory and with a data. The name is algorithm_configuration.yaml
+        
+    Parameters
+    ----------
+    output_directory (str): the directory of the output
+    
+    data (str): a dictionary with the data to be saved
+   
+    Returns
+    -------
+    """
+    file_path=os.path.join(output_directory,'algorithm_configuration.yaml')
+    with open(file_path, 'w') as file:
+        yaml.dump(data, file, default_flow_style=False)

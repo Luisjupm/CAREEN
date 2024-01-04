@@ -11,6 +11,7 @@ import joblib
 import os
 import subprocess
 import sys
+import yaml
 
 import pandas as pd
 import numpy
@@ -26,8 +27,9 @@ import itertools
 from matplotlib import pyplot as plt
 import pickle
 import seaborn as sns
+
 current_directory=os.path.dirname(os.path.abspath(__file__))
-temp_folder=os.path.join(current_directory,'..','temp')
+
 
 
 def main():
