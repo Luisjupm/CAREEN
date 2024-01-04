@@ -34,7 +34,7 @@ from main_gui import show_features_window, definition_of_labels
 #%% ADDING PATHS FROM THE CONFIGS FILES
 current_directory= os.path.dirname(os.path.abspath(__file__))
 
-config_file=os.path.join(current_directory,r'..\configs\registration_module.yml')
+config_file=os.path.join(current_directory,r'..\configs\executables.yml')
 
 # Read the configuration from the YAML file for the set-up
 with open(config_file, 'r') as yaml_file:
