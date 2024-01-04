@@ -15,6 +15,7 @@ from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
 import traceback
+import pandas as pd
 
 #CloudCompare Python Plugin
 import cccorelib
@@ -503,7 +504,7 @@ class GUI:
             # YAML file
             yaml_of = {
                 'INPUT_POINT_CLOUD': input_path_point_cloud,                
-                'SELECTORS FILE': os.path.join(self.output_directory,'selected_params.txt'),
+                'SELECTORS_FILE': os.path.join(self.output_directory,'selected_params.txt'),
                 'OUTPUT_DIRECTORY': self.output_directory,
                 'CONFIGURATION': {
                     'cv': self.set_up_parameters_of["cv"],
@@ -514,9 +515,9 @@ class GUI:
             
             write_yaml_file (self.output_directory,yaml_of)
             
-            # # RUN THE COMMAND LINE      
-            command = path_optimal_flow
-            print(command)
+            # RUN THE COMMAND LINE      
+            command = path_optimal_flow + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
+            # os.system(command)
 
         # To run the machine learning segmentation
         def run_algorithm_2 (self,algo,pc_training_name,pc_testing_name):
@@ -598,7 +599,24 @@ class GUI:
             
             # RUN THE COMMAND LINE
             os.system(command)
-        
+
+            # CREATE THE RESULTING POINT CLOUD 
+            # Load the predictions
+            pcd_prediction = pd.read_csv(os.path.join(self.output_directory,'predictions.txt'), sep=',')  # Use sep='\t' for tab-separated files       
+            # # Select only the 'Predictions' column
+            pc_results_prediction = pycc.ccPointCloud(pcd_prediction['X'], pcd_prediction['Y'], pcd_prediction['Z'])
+            pc_results_prediction.setName("Results_from_segmentation")
+            idx = pc_results_prediction.addScalarField("Labels",pcd_prediction['Predictions']) 
+            # STORE IN THE DATABASE OF CLOUDCOMPARE
+            CC = pycc.GetInstance()
+            CC.addToDB(pc_results_prediction)
+            CC.updateUI() 
+            root.destroy()
+            # Revome files
+            os.remove(os.path.join(self.output_directory,'predictions.txt'))
+            os.remove(os.path.join(self.output_directory, 'input_point_cloud_training.txt'))
+            os.remove(os.path.join(self.output_directory, 'input_point_cloud_testing.txt'))
+            print("The process has been finished")            
         # To run the prediction of machine learning
         def run_algorithm_3 (self,pc_prediction_name,path_features,path_pickle):
             # Check if the selection is a point cloud

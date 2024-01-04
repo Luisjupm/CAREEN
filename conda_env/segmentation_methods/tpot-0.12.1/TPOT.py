@@ -32,6 +32,7 @@ from tpot import *
 import tpot
 
 def main():
+
     # Import all the parameters form the CMD
     parser = argparse.ArgumentParser()
     parser.add_argument('--i',type=str,help='Yaml configuration file')
@@ -39,12 +40,12 @@ def main():
     args=parser.parse_args()  
 
     # Read the configuration from the YAML file for the set-up
-    with open(r"C:\Users\LuisJa\Desktop\automl\algorithm_configuration.yaml", 'r') as yaml_file:
+    with open(args.i, 'r') as yaml_file:
         config_data = yaml.safe_load(yaml_file)
     test_file= config_data.get('INPUT_POINT_CLOUD_TESTING')
     train_file= config_data.get('INPUT_POINT_CLOUD_TRAINING')
     output_directory= config_data.get('OUTPUT_DIRECTORY')
-    features2include= config_data.get('INPUT_FEATURES')
+    features2include_path= config_data.get('INPUT_FEATURES')
     generations=config_data['CONFIGURATION']['ge']
     population_size=config_data['CONFIGURATION']['ps']
     mutation_rate=config_data['CONFIGURATION']['mr']
@@ -55,6 +56,9 @@ def main():
     early_stop=config_data['CONFIGURATION']['ng']
     scoring=config_data['CONFIGURATION']['s']
     
+    # There are an issue with the f1 score. This score only accepts 0 and 1 lables. So if you introduce 3 and 4 labels, for example, throws and error
+    if scoring=="f1":
+        scoring="f1_macro"
 
     
     # test_file=args.te
@@ -64,7 +68,7 @@ def main():
     # output_directory=args.o
     print("Output directory is " + output_directory)
     # # features2include=args.f
-    print("Features to include = " + features2include)
+    print("Features to include = " + features2include_path)
     # # generations=args.ge
     print("Value chosen for generations = " + str(generations))
     # population_size=args.ps
@@ -93,7 +97,7 @@ def main():
     pcd_training.dropna(inplace=True)
     pcd_testing.dropna(inplace=True)
     labels_train=pcd_training[labels2include]
-    with open(output_directory + "\\features.txt", "r") as file:
+    with open(features2include_path, "r") as file:
         features2include = [line.strip().split(',') for line in file]    
     features=pcd_training[features2include[0]]   
     X_train=features
@@ -122,14 +126,15 @@ def main():
                                         use_dask=False
                                         )
        
+    
     # Run the TPOT with the training data and the pipeline
     pipeline_optimizer.fit(X_train, y_train_reshaped)
-    
+   
     
     # Serialize the best pipeline (model) into a .pkl file
     joblib.dump(pipeline_optimizer.fitted_pipeline_,os.path.join(output_directory, 'best_pipeline.pkl'))  # Replace 'fitted_pipeline_' with the appropriate attribute
     
-    # Load the pickled model
+    # Load the pickled model 
     loaded_model = joblib.load(os.path.join(output_directory, 'best_pipeline.pkl'))    
 
     # Prediction
