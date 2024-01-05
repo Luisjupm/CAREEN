@@ -521,7 +521,7 @@ class GUI:
             command = path_optimal_flow + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
             print (command)
             # os.system(command)
-
+            print("The process has been finished") 
         # To run the machine learning segmentation
         def run_algorithm_2 (self,algo,pc_training_name,pc_testing_name):
             

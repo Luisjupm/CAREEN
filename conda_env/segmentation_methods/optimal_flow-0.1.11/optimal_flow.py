@@ -42,8 +42,12 @@ def main():
     # Read the input file and prepare them. We delete the X,Y,Z and Classification from the features as well as the column of classification from the input point cloud
     tr = pd.read_csv(input_file,delimiter=' ')
     tr_features_copy=tr
-    tr_features_clean= tr_features_copy.drop(['X','Y','Z','Classification'], axis=1)
-    tr_labels_clean=tr[['Classification']]
+    if 'Classification' in tr_features_copy.columns:
+        tr_features_clean=tr_features_copy.drop (['Classification'], axis=1)
+        tr_labels_clean=tr[['Classification']]   
+    else:
+        tr_features_clean=tr_features_copy
+        tr_labels_clean=tr
     
     # Check if any missing values exist in the DataFrame
     if tr_features_clean.any().any():
@@ -60,9 +64,14 @@ def main():
     tr_labels=tr_labels_clean.values
     tr_labels_2d = tr_labels.ravel()
     
+    # REad the selectors
+    # Open the file in read mode
+    with open(selectors, 'r') as file:
+        # Read all lines in the file and strip newline characters
+        selectors_list = [line.strip() for line in file]
     # Run optimalflow
     reg_fs_demo = dynaFS_clf(
-                            custom_selectors=selectors.split(','), 
+                            # custom_selectors=selectors_list,
                             fs_num = int(features), 
                             random_state = None, 
                             cv = int(cross_val), 
