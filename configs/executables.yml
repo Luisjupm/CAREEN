@@ -2,7 +2,9 @@
 
 # MACHINE LEARNING APP
 OPTIMAL_FLOW: 'optimal_flow-0.1.11/optimal_flow.exe'   
-RANDOM_FOREST: 'scikit-learn-1.3.2/machine_learning.exe'   
+RANDOM_FOREST: 'scikit-learn-1.3.2/scikit-learn-1.3.2.exe' 
+SUPPORT_VECTOR_MACHINE: 'scikit-learn-1.3.2/scikit-learn-1.3.2.exe'  
+LINEAR_REGRESSION: 'scikit-learn-1.3.2/scikit-learn-1.3.2.exe'    
 PREDICTION: 'scikit-learn-1.3.2/scikit-learn-1.3.2.exe' 
 TPOT: 'tpot-0.12.1/tpot.exe'   
 

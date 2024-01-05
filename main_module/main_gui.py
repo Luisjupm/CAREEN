@@ -122,26 +122,23 @@ def show_features_window(self,name_list,training_pc_name="Not selected",excluded
         ttk.Checkbutton(features_frame, text=value, variable=var, onvalue=True, offvalue=False).pack(anchor="w")
         
         
-def definition_of_labels (header,label_texts,row_positions,window,column=0,pady=2,sticky="w"):
+def definition_of_labels_type_1 (header,label_texts,row_positions,window,column=0):
     
     """
     This fuction allows to create the labels of a tab
         
     Parameters
     ----------
-    header (str): name of the label. It will be as: header_idx. Where idx is the row on which the label appears. I.e t1_1 the header is t1 and the row is 1 for this element
-    
-    row_positions (list): a list with the position (rows) of each label text
+    header (str): name of the label. It will be as: header_label_idx. Where idx is the row on which the label appears. I.e t1_label_1 the header is t1 and the row is 1 for this element
     
     label_text (list) a list with the name of each label
     
+    row_positions (list): a list with the position (rows) of each label text
+        
     window (tk window): the window on which the information will be rendered
     
     column (int): the column to place the labels. Default: 0
     
-    pady (int): the pad along the y-axis. Default: 2
-    
-    sticky (str): the position of the text.  Default: "w"
    
     Returns
     -------
@@ -150,9 +147,73 @@ def definition_of_labels (header,label_texts,row_positions,window,column=0,pady=
    
     labels = {}  # Dictionary to store labels    
     for idx, (text, row) in enumerate(zip(label_texts, row_positions)):
-        label_name = f"t1_{idx}"
+        label_name = f"{header}_label_{idx}"
         labels[label_name] = ttk.Label(window, text=text)
-        labels[label_name].grid(column=0, row=row, pady=2, sticky="w")     
+        labels[label_name].grid(column=column, row=row, pady=2, sticky="w")     
 
-              
+def definition_of_entries_type_1 (header,entry_insert,row_positions,window,column=1):
     
+    """
+    This fuction allows to create the entries of a tab
+        
+    Parameters
+    ----------
+    header (str): name of the label. It will be as: header_label_idx. Where idx is the row on which the label appears. I.e t1_entry_1 the header is t1 and the row is 1 for this element
+
+    entry_insert (list): a list with the insert of each entry
+    
+    row_positions (list): a list with the position (rows) of each label text
+
+    window (tk window): the window on which the information will be rendered
+    
+    column (int): the column to place the labels. Default: 1
+      
+    Returns
+    -------
+    
+    entry_list (dict): dictionary with the name of the elements. This is because if you have rows (0,2,4) you can access as entry_dict [2] for the second element.
+
+    """      
+    entry_dict = {}  # Dictionary to store instances of entry mapped to row positions
+
+    for row_idx, (row_data, insert_value) in enumerate(zip(row_positions, entry_insert)):        
+        entry = tk.Entry(window, name=f"{header}_entry_{row_idx}",width=10) 
+        entry.grid(column=column, row=row_data, sticky="e")
+        entry.insert(0,insert_value)
+        entry_dict[row_data] = entry  # Map row position to the entry instance
+    return entry_dict
+
+def definition_of_combobox_type_1 (header,combobox_insert,row_positions, selected_element,window,column=1):
+    
+    """
+    This fuction allows to create the labels of a tab
+        
+    Parameters
+    ----------
+    header (str): name of the label. It will be as: header_label_idx. Where idx is the row on which the label appears. I.e t1_entry_1 the header is t1 and the row is 1 for this element
+
+    combobox_insert (list): a list with the insert of each combobox. This list could include another list with the options of the combobox
+    
+    row_positions (list): a list with the position (rows) of each label text
+
+    window (tk window): the window on which the information will be rendered
+    
+    column (int): the column to place the labels. Default: 1
+      
+    Returns
+    -------
+    
+    combobox_list (dict): dictionary with the name of the elements. This is because if you have rows (0,2,4) you can access as comboboxes_dict [2] for the second element.
+
+    """      
+  
+    comboboxes_dict = {}  # Dictionary to store instances of ComboBoxes mapped to row positions
+    
+    for row_idx, (row_data, options) in enumerate(zip(row_positions, combobox_insert)):
+        combobox = ttk.Combobox(window, name=f"{header}_combobox_{row_idx}", width=10, values=options)
+        combobox.grid(column=column, row=row_data, sticky="e")
+        initial_selection = selected_element[row_idx] if row_idx < len(selected_element) else options[0]
+        combobox.current(options.index(initial_selection))  # Set initial selection
+        comboboxes_dict[row_data] = combobox  # Map row position to the ComboBox instance
+    return comboboxes_dict
+   

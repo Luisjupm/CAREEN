@@ -29,8 +29,7 @@ additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\main_module'
 
 sys.path.insert(0, additional_modules_directory)
 from main import P2p_getdata,get_istance,get_point_clouds_name, check_input, write_yaml_file
-from main_gui import show_features_window, definition_of_labels
-
+from main_gui import show_features_window, definition_of_labels_type_1,definition_of_entries_type_1, definition_of_combobox_type_1
 #%% ADDING PATHS FROM THE CONFIGS FILES
 current_directory= os.path.dirname(os.path.abspath(__file__))
 
@@ -41,6 +40,8 @@ with open(config_file, 'r') as yaml_file:
     config_data = yaml.safe_load(yaml_file)
 path_optimal_flow= os.path.join(current_directory,config_data['OPTIMAL_FLOW'])
 path_random_forest= os.path.join(current_directory,config_data['RANDOM_FOREST'])
+path_support_vector_machine= os.path.join(current_directory,config_data['SUPPORT_VECTOR_MACHINE'])
+path_linear_regression= os.path.join(current_directory,config_data['LINEAR_REGRESSION'])
 path_prediction= os.path.join(current_directory,config_data['PREDICTION'])
 path_aml= os.path.join(current_directory,config_data['TPOT'])
 
@@ -75,8 +76,39 @@ class GUI:
             "weights": 0,
             "features": "sqrt",
             "bootstrap": True,
-            "scoring": 'balanced_accuracy',
             "njobs": -1
+            }
+        
+        # Support Vector Machine- Support Vector Classification
+        self.set_up_parameters_svm_svc= {
+            "c": 1.0,
+            "kernel": "rbf",
+            "degree": 3,
+            "gamma": "scale",
+            "coef()": 0.0,
+            "shrinking": "True",
+            "probability": "False",
+            "tol": 0.001,
+            "class_weight": 'balanced',
+            "max_iter": 1000,
+            "decision_function_shape": 'ovr',
+            "break_ties":"False",
+            }
+        
+        # Logistic regression multilabel
+        self.set_up_parameters_lr= {
+            "penalty": "l2",
+            "dual": "False",
+            "tol": 0.0001,
+            "c": 1,
+            "fit_intercept": "True",
+            "intercept_scaling": 1.0,
+            "class_weight": "No",
+            "solver": 'lbfgs',
+            "max_iter": 100,
+            "multi_class": 'auto',
+            "n_jobs":-1,
+            "l1_ratio":0       
             }
             
         # Auto-ml
@@ -150,9 +182,35 @@ class GUI:
                 self.set_up_parameters_rf["weights"]=params[5]
                 self.set_up_parameters_rf["features"]=params[6]
                 self.set_up_parameters_rf["bootstrap"]=params[7]
-                self.set_up_parameters_rf["scoring"]=params[8]
 
-                    
+                
+            elif algo=="Support Vector Machine":
+                self.set_up_parameters_svm_svc ["c"]=params[0]
+                self.set_up_parameters_svm_svc ["kernel"]=params[1]
+                self.set_up_parameters_svm_svc ["degree"]=params[2]
+                self.set_up_parameters_svm_svc ["gamma"]=params[3]
+                self.set_up_parameters_svm_svc ["coef()"]=params[4]
+                self.set_up_parameters_svm_svc ["shrinking"]=params[5]
+                self.set_up_parameters_svm_svc ["probability"]=params[6]
+                self.set_up_parameters_svm_svc ["tol"]=params[7]
+                self.set_up_parameters_svm_svc ["class_weight"]=params[8]
+                self.set_up_parameters_svm_svc ["max_iter"]=params[9]
+                self.set_up_parameters_svm_svc ["decision_function_shape"]=params[10]
+                self.set_up_parameters_svm_svc ["break_ties"]=params[11]
+                
+            elif algo== "Logistic Regression":
+                self.set_up_parameters_lr ["penalty"]=params[0]
+                self.set_up_parameters_lr ["dual"]=params[1]
+                self.set_up_parameters_lr ["tol"]=params[2]
+                self.set_up_parameters_lr ["c"]=params[3]
+                self.set_up_parameters_lr ["fit_intercept"]=params[4]
+                self.set_up_parameters_lr ["intercept_scaling"]=params[5]
+                self.set_up_parameters_lr ["class_weight"]=params[6]
+                self.set_up_parameters_lr ["solver"]=params[7]
+                self.set_up_parameters_lr ["max_iter"]=params[8]
+                self.set_up_parameters_lr ["multi_class"]=params[9]
+                self.set_up_parameters_lr ["l1_ratio"]=params[10]
+               
             elif algo=="Auto Machine Learning":
                 self.set_up_parameters_aml["generations"]=params[0]
                 self.set_up_parameters_aml["size"]=params[1]
@@ -183,10 +241,14 @@ class GUI:
                     
             def on_ok_button_click(algo):
                 if algo=="Random Forest":
-                    save_setup_parameters(self,algo, int(entry_param1_rf.get()), str(combo_param2_rf.get()), int(entry_param3_rf.get()), int(entry_param4_rf.get()), int(entry_param5_rf.get()), int(entry_param6_rf.get()), str(combo_param7_rf.get()), bool(combo_param8_rf.get()), str(combo_param9_rf.get()))
+                    save_setup_parameters(self,algo, int(entry_param1_rf.get()), str(combo_param2_rf.get()), int(entry_param3_rf.get()), int(entry_param4_rf.get()), int(entry_param5_rf.get()), int(entry_param6_rf.get()), str(combo_param7_rf.get()), bool(combo_param8_rf.get()))
+                elif algo=="Support Vector Machine":
+                    save_setup_parameters(self, algo,float(svm_scv_entries[0].get()),str(svm_scv_comboboxes[1].get()),int(svm_scv_entries[2].get()),str(svm_scv_comboboxes[3].get()),float(svm_scv_entries[4].get()),str(svm_scv_comboboxes[5].get()),str(svm_scv_comboboxes[6].get()),float(svm_scv_entries[7].get()),str(svm_scv_comboboxes[8].get()),int(svm_scv_entries[9].get()),str(svm_scv_comboboxes[10].get()),str(svm_scv_comboboxes[11].get()))
+                elif algo=="Logistic Regression":
+                    save_setup_parameters(self, algo,str(lr_comboboxes[0].get()),str(lr_comboboxes[1].get()),float(lr_entries[2].get()),float(lr_entries[3].get()),str(lr_comboboxes[4].get()),float(lr_entries[5].get()),str(lr_comboboxes[6].get()),str(lr_comboboxes[7].get()),int(lr_entries[8].get()),str(lr_comboboxes[9].get()),float(lr_entries[10].get()))
                 elif algo=="Auto Machine Learning":                    
                     save_setup_parameters(self,algo, int(entry_param1_aml.get()), int(entry_param2_aml.get()), float(entry_param3_aml.get()), float(entry_param4_aml.get()), int(entry_param5_aml.get()), int(entry_param6_aml.get()), int(entry_param7_aml.get()), int(entry_param8_aml.get()), str(combo_param9_aml.get()))
-               
+
                 set_up_window.destroy()  # Close the window after saving parameters
                 
             # Setup window
@@ -208,10 +270,9 @@ class GUI:
                     "Minimum weight fraction of the total sum of weights:",
                     "Maximum number of features:",
                     "Bootstrap:",
-                    "Scoring:"
                 ]
-                row_positions = [0,1,2,3,4,5,6,7,8]        
-                definition_of_labels ("root",label_texts,row_positions,set_up_window,0,2,"w")
+                row_positions = [0,1,2,3,4,5,6,7]        
+                definition_of_labels_type_1 ("rf",label_texts,row_positions,set_up_window,0)
 
                 
                 # Entries                
@@ -248,18 +309,106 @@ class GUI:
                 
                 bootstrap= [True, False]
                 combo_param8_rf=ttk.Combobox (set_up_window, values=bootstrap, state="readonly")
-                combo_param8_rf.set(self.set_up_parameters_rf["bootstrap"])
+                combo_param8_rf.set("No selected")
                 combo_param8_rf.grid(column=1, row=7, sticky="e", pady=2)
-                
-                scoring=["balanced_accuracy","accuracy","f1","f1_weighted","precision","precision_weighted"]
-                combo_param9_rf=ttk.Combobox (set_up_window, values=scoring, state="readonly")
-                combo_param9_rf.set(self.set_up_parameters_rf["scoring"])
-                combo_param9_rf.grid(column=1, row=8, sticky="e", pady=2)
-                
+                               
                 ok_button = ttk.Button(set_up_window, text="OK", command=lambda: on_ok_button_click(algo), width=10)
                 ok_button.grid(row=9, column=1, sticky="w", padx=100)
+                
+            elif algo== "Support Vector Machine":
+                
+                # Labels
+                label_texts = [
+                    "Regularization parameter:",
+                    "Kernel type:",
+                    "Degree of the polynomial kernel function:",
+                    "Kernel coefficient:",
+                    "Idenpendent term in kernel function:",
+                    "Use shrinking heuristics:",
+                    "Enable probaility estimates:",                    
+                    "Tolerance for stopping criterion:",                    
+                    "Class weight:",
+                    "Max number of iterations:",
+                    "Returned function:",
+                    "Break ties:",                     
+                ]
+                row_positions = [0,1,2,3,4,5,6,7,8,9,10,11]        
+                definition_of_labels_type_1 ("svm_scv",label_texts,row_positions,set_up_window,0)
+                
+                # Entries
+                entry_insert = [
+                    self.set_up_parameters_svm_svc ["c"],
+                    self.set_up_parameters_svm_svc ["degree"],
+                    self.set_up_parameters_svm_svc ["coef()"],
+                    self.set_up_parameters_svm_svc ["tol"],
+                    self.set_up_parameters_svm_svc ["max_iter"],
+                    ]
+                row_positions = [0,2,4,7,9]        
+                svm_scv_entries = definition_of_entries_type_1 ("svm_scv",entry_insert,row_positions,set_up_window,1) 
+                
+                # Combobox
+                combobox_insert = [
+                    ["linear","poly","rbf","sigmoid"],
+                    ["scale","auto"],
+                    ["True","False"],
+                    ["True","False"],
+                    ["No","balanced"],
+                    ["ovo","ovr"],
+                    ["True","False"]
+                    ]
+                row_positions = [1,3,5,6,8,10,11]
+                selected_element = ["rbf","scale","True","False","No","ovr","False"]
+                svm_scv_comboboxes =definition_of_combobox_type_1 ("svm_scv",combobox_insert,row_positions, selected_element,set_up_window,1)
+                            
+                svm_scv_button_ok = ttk.Button(set_up_window, text="OK", command=lambda: on_ok_button_click(algo), width=10)
+                svm_scv_button_ok.grid(row=12, column=1, sticky="w", padx=100)   
+                
+            elif algo== "Logistic Regression":
+                
+                # Labels
+                label_texts = [
+                    "Penalty function:",
+                    "Constrained problem (dual):",
+                    "Tolerance for stopping criterion:",
+                    "Inverse of regularization strength:",
+                    "Add a bias to the model:",
+                    "Intercept scaling:",
+                    "Class weight:",
+                    "Type of solver:",
+                    "Max number of iterations:",
+                    "Type of multiclass fitting strategy:",
+                    "Elastic-Net mixing parameter:"
+                ]
+                row_positions = [0,1,2,3,4,5,6,7,8,9,10]        
+                definition_of_labels_type_1 ("lr",label_texts,row_positions,set_up_window,0)
 
-                       
+                # Entries
+                entry_insert = [
+                    self.set_up_parameters_lr ["tol"],
+                    self.set_up_parameters_lr["c"],
+                    self.set_up_parameters_lr ["intercept_scaling"],
+                    self.set_up_parameters_lr ["max_iter"],
+                    self.set_up_parameters_lr ["l1_ratio"]
+                    ]
+                row_positions = [2,3,5,8,10]        
+                lr_entries = definition_of_entries_type_1 ("lr",entry_insert,row_positions,set_up_window,1) 
+                
+                # Combobox
+                combobox_insert = [
+                    ["l1","l2","elasticnet","No"],
+                    ["True","False"],
+                    ["True","False"],
+                    ["No","balanced"],
+                    ["lbfgs","liblinear","newtow-cg","newton-cholesky","sag","saga"],
+                    ["auto","ovr","multimodal"],
+                    ]
+                row_positions = [0,1,4,6,7,9]
+                selected_element = ["l2","False","True","No","lbfgs","auto"]
+                lr_comboboxes =definition_of_combobox_type_1 ("lr",combobox_insert,row_positions, selected_element,set_up_window,1)
+                
+                lr_button_ok = ttk.Button(set_up_window, text="OK", command=lambda: on_ok_button_click(algo), width=10)
+                lr_button_ok.grid(row=12, column=1, sticky="w", padx=100)   
+                    
             elif algo=="Auto Machine Learning":
                 
                 # Labels
@@ -275,7 +424,7 @@ class GUI:
                     "Scoring:"
                 ]
                 row_positions = [0,1,2,3,4,5,6,7,8]        
-                definition_of_labels ("root",label_texts,row_positions,set_up_window,0,2,"w")                     
+                definition_of_labels_type_1 ("aml",label_texts,row_positions,set_up_window,1)                     
                 
                 # Entries
                 entry_param1_aml= ttk.Entry(set_up_window, width=10)
@@ -322,7 +471,7 @@ class GUI:
         # GENERAL CONFIGURATION OF THE GUI
         
         # Configuration of the window        
-        root.title ("Machine Learning segmentation")
+        root.title ("Supervised Machine Learning segmentation")
         root.resizable (False, False)     
         root.attributes ('-toolwindow',-1) # Remove minimize and maximize button 
         
@@ -367,7 +516,7 @@ class GUI:
             "Choose output directory:",
         ]
         row_positions = [0,1,2,3,4,5]        
-        definition_of_labels ("t1",label_texts,row_positions,tab1,0,2,"w") 
+        definition_of_labels_type_1 ("t1",label_texts,row_positions,tab1,0) 
             
         # Combobox
         t1_combo_point_cloud=ttk.Combobox (tab1,values=name_list)
@@ -411,7 +560,7 @@ class GUI:
             "Choose output directory:"
         ]
         row_positions = [0,1,2,3,4]        
-        definition_of_labels ("t2",label_texts,row_positions,tab2,0,2,"w")     
+        definition_of_labels_type_1 ("t2",label_texts,row_positions,tab2,0)     
 
         # Combobox
         t2_combo_point_cloud_training=ttk.Combobox (tab2,values=name_list)
@@ -422,7 +571,7 @@ class GUI:
         t2_combo_point_cloud_testing.grid(column=1, row=1, sticky="e", pady=2)
         t2_combo_point_cloud_testing.set("Select the point cloud used for testing:")
         
-        algorithms=["Random Forest", "Logistic Regression", "Auto Machine Learning"]
+        algorithms=["Random Forest","Support Vector Machine", "Logistic Regression", "Auto Machine Learning"]
         t2_combo_algo=ttk.Combobox (tab2,values=algorithms, state="readonly")
         t2_combo_algo.grid(column=1, row=2, sticky="e", pady=2)
         t2_combo_algo.set("Not selected")
@@ -456,7 +605,7 @@ class GUI:
             "Choose output directory:"
         ]
         row_positions = [0,1,2,3]        
-        definition_of_labels ("t3",label_texts,row_positions,tab3,0,2,"w")  
+        definition_of_labels_type_1 ("t3",label_texts,row_positions,tab3,0)  
         
         # Combobox
         t3_combo_1=ttk.Combobox (tab3,values=name_list)
@@ -520,11 +669,10 @@ class GUI:
             # RUN THE COMMAND LINE      
             command = path_optimal_flow + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
             print (command)
-            # os.system(command)
+            os.system(command)
             print("The process has been finished") 
         # To run the machine learning segmentation
         def run_algorithm_2 (self,algo,pc_training_name,pc_testing_name):
-            
             # Check if the selection is a point cloud
             pc_training=check_input(name_list,pc_training_name)
             pc_testing=check_input(name_list,pc_testing_name)
@@ -554,7 +702,7 @@ class GUI:
                     'INPUT_POINT_CLOUD_TESTING': os.path.join(self.output_directory, 'input_point_cloud_testing.txt'), 
                     'INPUT_FEATURES': os.path.join(self.output_directory, 'features.txt'),
                     'OUTPUT_DIRECTORY': self.output_directory,
-                    'ALGORITHM': "Random Forest",
+                    'ALGORITHM': "Random_forest",
                     'CONFIGURATION': 
                         {
                         'ne': self.set_up_parameters_rf["estimators"],
@@ -565,12 +713,79 @@ class GUI:
                         'mwf': self.set_up_parameters_rf["weights"],
                         'mf': self.set_up_parameters_rf["features"],
                         'bt': self.set_up_parameters_rf["bootstrap"],
-                        's': self.set_up_parameters_rf["scoring"],
                         'nj': self.set_up_parameters_rf["njobs"]
                         }
                 }                          
+                write_yaml_file (self.output_directory,yaml)
                 command = path_random_forest + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
                 
+            elif algo=="Support Vector Machine":
+
+                # YAML file
+                yaml = {
+                    'INPUT_POINT_CLOUD_TRAINING': os.path.join(self.output_directory, 'input_point_cloud_training.txt'),  
+                    'INPUT_POINT_CLOUD_TESTING': os.path.join(self.output_directory, 'input_point_cloud_testing.txt'), 
+                    'INPUT_FEATURES': os.path.join(self.output_directory, 'features.txt'),
+                    'OUTPUT_DIRECTORY': self.output_directory,
+                    'ALGORITHM': "Support Vector Machine",
+                    'CONFIGURATION': 
+                        {
+                        'C': self.set_up_parameters_svm_svc["c"],
+                        'kernel': self.set_up_parameters_svm_svc["kernel"],
+                        'degree': self.set_up_parameters_svm_svc["degree"],
+                        'gamma': self.set_up_parameters_svm_svc["gamma"],
+                        'coef0': self.set_up_parameters_svm_svc["coef()"],
+                        'shrinking': self.set_up_parameters_svm_svc["shrinking"],
+                        'probability': self.set_up_parameters_svm_svc["probability"],
+                        'tol': self.set_up_parameters_svm_svc["tol"],
+                        'class_weight': self.set_up_parameters_svm_svc["class_weight"],
+                        'max_iter': self.set_up_parameters_svm_svc["max_iter"],
+                        'decision_function_shape': self.set_up_parameters_svm_svc["decision_function_shape"],
+                        'break_ties': self.set_up_parameters_svm_svc["break_ties"]
+                        }
+                } 
+                # Logistic regression multilabel
+                self.set_up_parameters_lr= {
+                    "penalty": "l2",
+                    "dual": False,
+                    "tol": 0.0001,
+                    "c": 1,
+                    "fit_intercept": True,
+                    "intercept_scaling": 1.0,
+                    "class_weight": "No",
+                    "solver": 'lbfgs',
+                    "max_iter": 100,
+                    "multi_class": 'auto',
+                    "n_jobs":-1,
+                    "l1_ratio":0       
+                    }
+                write_yaml_file (self.output_directory,yaml)
+                command = path_support_vector_machine + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
+            elif algo=="Logistic Regression":
+                # YAML file
+                yaml = {
+                    'INPUT_POINT_CLOUD_TRAINING': os.path.join(self.output_directory, 'input_point_cloud_training.txt'),  
+                    'INPUT_POINT_CLOUD_TESTING': os.path.join(self.output_directory, 'input_point_cloud_testing.txt'), 
+                    'INPUT_FEATURES': os.path.join(self.output_directory, 'features.txt'),
+                    'OUTPUT_DIRECTORY': self.output_directory,
+                    'ALGORITHM': "Logistic Regression",
+                    'CONFIGURATION': 
+                        {
+                        'penalty': self.set_up_parameters_lr["penalty"],
+                        'dual': self.set_up_parameters_lr["dual"],
+                        'tol': self.set_up_parameters_lr["tol"],
+                        'c': self.set_up_parameters_lr["c"],
+                        'fit_intercept': self.set_up_parameters_lr["fit_intercept"],
+                        'intercept_scaling': self.set_up_parameters_lr["intercept_scaling"],
+                        'class_weight': self.set_up_parameters_lr["class_weight"],
+                        'solver': self.set_up_parameters_lr["solver"],
+                        'max_iter': self.set_up_parameters_lr["max_iter"],
+                        'multi_class': self.set_up_parameters_lr["multi_class"],
+                        'l1_ratio': self.set_up_parameters_lr["l1_ratio"],
+                        }
+                }
+                write_yaml_file (self.output_directory,yaml)
+                command = path_linear_regression + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
             elif algo=="Auto Machine Learning":                
                 # Join the list items with commas to create a comma-separated string
                 comma_separated = ','.join(self.features2include)    
@@ -616,11 +831,11 @@ class GUI:
             CC.updateUI() 
             root.destroy()
             # Revome files
-            os.remove(os.path.join(self.output_directory,'predictions.txt'))
             os.remove(os.path.join(self.output_directory, 'input_point_cloud_training.txt'))
             os.remove(os.path.join(self.output_directory, 'input_point_cloud_testing.txt'))
-            print("The process has been finished")            
-        # To run the prediction of machine learning
+            print("The process has been finished")    
+            
+        #To run the prediction of machine learning
         def run_algorithm_3 (self,pc_prediction_name,path_features,path_pickle):
             
             # Check if the selection is a point cloud
@@ -645,6 +860,7 @@ class GUI:
                     }
             } 
             write_yaml_file (self.output_directory,yaml)    
+            
             # RUN THE COMMAND LINE
             command = path_prediction + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
             os.system(command) 
@@ -665,8 +881,8 @@ class GUI:
             root.destroy()
             
             # Revome files
-            os.remove(os.path.join(self.output_directory,'predictions.txt'))
             os.remove(os.path.join(self.output_directory, 'input_point_cloud_prediction.txt'))
+            os.remove(os.path.join(self.output_directory,'algorithm_configuration.yaml'))
             print("The process has been finished") 
          
                  
