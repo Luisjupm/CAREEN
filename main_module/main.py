@@ -379,7 +379,7 @@ def extract_points_within_tolerance(point_cloud, tolerance,rot):
 def check_input (name_list,pc_name):
     
     """
-    This fuction allows to transform the CC point cloud to a pandas dataframe 
+    This fuction allows to check the type of input. Point cloud or folder.
         
     Parameters
     ----------
@@ -394,10 +394,14 @@ def check_input (name_list,pc_name):
     
     CC = pycc.GetInstance() 
     type_data, number = get_istance()
+
+    # Some control loops to avoid wrongs assignations
     if type_data=='point_cloud' or type_data=='folder':
         pass
     else:
         raise RuntimeError("Please select a folder that contains points clouds or a point cloud")        
+    if pc_name=="Not selected":
+        raise RuntimeError("You need to select a valid point cloud from the list")   
     if number==0:
         raise RuntimeError("There are not entities in the folder")
     else:

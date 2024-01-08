@@ -34,13 +34,13 @@ import yaml
 def main():
     
     #%% CMD
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('--i',type=str,help='Yaml configuration file')
-    # parser.add_argument('--o',type=str,help='Output_directory')    
-    # args=parser.parse_args() 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--i',type=str,help='Yaml configuration file')
+    parser.add_argument('--o',type=str,help='Output_directory')    
+    args=parser.parse_args() 
     
     #%% INITIAL READING
-    with open(r"C:\Users\LuisJa\Desktop\logistic_regression\algorithm_configuration.yaml", 'r') as yaml_file:
+    with open(args.i, 'r') as yaml_file:
         config_data = yaml.safe_load(yaml_file)
     algo =  config_data.get('ALGORITHM')
     output_directory= config_data.get('OUTPUT_DIRECTORY')
@@ -102,51 +102,82 @@ def main():
         
     if algo=="Random_forest":        
         
-        ne=config_data['CONFIGURATION']['ne']
-        c=config_data['CONFIGURATION']['c']
-        md=config_data['CONFIGURATION']['md']
-        ms=config_data['CONFIGURATION']['ms']
-        mns=config_data['CONFIGURATION']['mns']
-        mwf=config_data['CONFIGURATION']['mwf']
-        mf=config_data['CONFIGURATION']['mf']
-        bt=config_data['CONFIGURATION']['bt']
-        n_jobs=config_data['CONFIGURATION']['nj'] 
+        n_estimators=config_data['CONFIGURATION']['n_estimators']
+        criterion=config_data['CONFIGURATION']['criterion']
+        max_depth=config_data['CONFIGURATION']['max_depth']
+        min_samples_split=config_data['CONFIGURATION']['min_samples_split']
+        min_samples_leaf=config_data['CONFIGURATION']['min_samples_leaf']
+        min_weight_fraction_leaf=config_data['CONFIGURATION']['min_weight_fraction_leaf']
+        max_features=config_data['CONFIGURATION']['max_features']
+        max_leaf_nodes=config_data['CONFIGURATION']['max_leaf_nodes']
+        min_impurity_decrease=config_data['CONFIGURATION']['min_impurity_decrease']
+        bootstrap=config_data['CONFIGURATION']['bootstrap']
+        class_weight=config_data['CONFIGURATION']['class_weight']
+        ccp_alpha=config_data['CONFIGURATION']['ccp_alpha']
+        max_samples=config_data['CONFIGURATION']['max_samples']          
+        n_jobs=config_data['CONFIGURATION']['n_jobs']
         
         # Restrictions
-        if not bt:
-            obb = False
+        if max_depth=="No":
+            max_depth=None
+        if max_leaf_nodes==0:
+            max_leaf_nodes=None
+        if min_samples_split>=2:
+            min_samples_split=int(min_samples_split)
         else:
-            obb = True  
+            min_samples_split=float(min_samples_split)
+        if max_depth==0:
+            max_depth=None
+        if not bootstrap=="True":
+            bootstrap=True
+            oob_score = True
+        else:
+            bootstrap=False
+            oob_score = False
+        if class_weight=="No":
+            class_weight=None
+        if ccp_alpha<0:
+            ccp_alpha=0
+        if max_samples==0:
+            max_samples=None
+        if min_samples_leaf>=1:
+            min_samples_leaf=int(min_samples_leaf)
+        else:
+            min_samples_leaf=float(min_samples_leaf)
             
-        print("Test file located in " + test_file)        
-        print("Train file located in " + train_file)        
-        print("Output directory is " + output_directory)        
-        print("Features to include = " + features2include_path)        
-        print("Number of estimators = " + str(ne))        
-        print("Criterion chosen = " + str(c))        
-        print("Maximum depth of the tree = " + str(md))        
-        print("Minimum number of samples required to split an internal node = " + str(ms))        
-        print("Minimum number of samples required to be at a leaf node = " + str(mns))        
-        print("Minimum weighted fraction of the sum total of weights (of all the input samples) required to be at a leaf node = " + str(mwf))        
-        print("Number of features to consider = " + str(mf))        
-        print("Bootstrap = " + str(bt)) 
-        print("Number of jobs = " + str(n_jobs))
-        
+        print ("Number of trees:"+str(n_estimators))
+        print ("Function to measure the quality of a split:"+str(criterion))
+        print ("Maximum depth of the tree:"+str(max_depth))
+        print ("Minimum number of samples for splitting:"+str(min_samples_split))
+        print ("Minimum number of samples to at a leaf node:"+str(min_samples_leaf))
+        print ("Minimum weighted fraction:"+str(min_weight_fraction_leaf))
+        print ("Number of features to consider for best split:"+str(max_features))
+        print ("Maximum number of leaf nodes:"+str(max_leaf_nodes))
+        print ("Impurity to split the node:"+str(min_impurity_decrease))
+        print ("Use of bootstrap:"+str(bootstrap))
+        print ("Weights associated to the classes:"+str(class_weight))
+        print ("Complexity parameter used for Minimal cost:"+str(ccp_alpha))
+        print ("Number of samples to draw to train each base estimator:"+str(max_samples))
+        print ("Number of cores to use (-1 means all):"+str(n_jobs))
   
-        model = RandomForestClassifier(
-            n_estimators=ne,
-            max_depth=md,
-            max_features=mf,
-            random_state=42,
-            oob_score=obb,
-            bootstrap=bt,
-            criterion=c,
-            min_samples_split=ms,
-            min_samples_leaf=mns,
-            min_weight_fraction_leaf=mwf,
-            n_jobs=n_jobs
+        model=RandomForestClassifier(
+            n_estimators=n_estimators,
+            criterion=criterion,
+            max_depth=max_depth,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            min_weight_fraction_leaf=min_weight_fraction_leaf,
+            max_features=max_features,
+            max_leaf_nodes=max_leaf_nodes,
+            min_impurity_decrease=min_impurity_decrease,
+            bootstrap=bootstrap,
+            oob_score=oob_score,
+            n_jobs=n_jobs,random_state=42,
+            class_weight=class_weight,
+            ccp_alpha=ccp_alpha,
+            max_samples=max_samples
             )
-        
+
     elif algo=="Support Vector Machine":
         
         C=config_data['CONFIGURATION']['C']
@@ -160,7 +191,8 @@ def main():
         class_weight=config_data['CONFIGURATION']['class_weight']
         max_iter=config_data['CONFIGURATION']['max_iter']
         decision_function_shape=config_data['CONFIGURATION']['decision_function_shape']
-        break_ties=config_data['CONFIGURATION']['break_ties']     
+        break_ties=config_data['CONFIGURATION']['break_ties'] 
+        
 
         # Restrictions
         if C<0:
@@ -202,7 +234,8 @@ def main():
         print("Break ties = " + str(break_ties)) 
       
         model= sklearn.svm.SVC(
-            C=C,kernel=kernel,
+            C=C,
+            kernel=kernel,
             degree=degree,
             gamma=gamma,
             coef0=coef0,
@@ -227,6 +260,7 @@ def main():
         max_iter=config_data['CONFIGURATION']['max_iter']
         multi_class=config_data['CONFIGURATION']['multi_class']
         l1_ratio=config_data['CONFIGURATION']['l1_ratio']
+        n_jobs=config_data['CONFIGURATION']['nj'] 
         
         # Restrictions
         if penalty=="No":
@@ -274,6 +308,7 @@ def main():
         print("Maximum number of iterations = " + str(max_iter))
         print("Multiclass strategy = " + multi_class)
         print("Elastic-Net mixing paramter = " + str(l1_ratio)) 
+        print("Number of cores to be used (-1 means all cores) = " + str(n_jobs))
         
         model=sklearn.linear_model.LogisticRegression(
             penalty=penalty,
@@ -286,7 +321,8 @@ def main():
             solver=solver,
             max_iter=max_iter,
             multi_class=multi_class,
-            l1_ratio=l1_ratio)
+            l1_ratio=l1_ratio,
+            n_jobs=n_jobs)
         
     #%% RUNNING THE MODEL AND PREDICT THE RESULTS
     if algo != "Prediction":
@@ -327,17 +363,29 @@ def main():
         
         # Save the importance graph
         viz.show(outpath=os.path.join(output_directory,'feature_importance.png'))
-        plt.close()  # Close the plot
+        # Close the plot
+        plt.close()  
         
-        # Extract feature importances
-        feature_importances = viz.feature_importances_
+        # Get feature importances
+        importances = model.feature_importances_
+        normalized_importances = (importances / importances.max()) * 100
+        feature_names = features2include[0]
         
-        # Create a DataFrame with feature names and importances
-        importance_df = pd.DataFrame({'Feature': X_train.columns, 'Importance': feature_importances})
+        # Summarize feature importances for plotting the txt        
+        feature_importances = pd.DataFrame({'feature': feature_names, 'importance': importances})
+        feature_importances = feature_importances.sort_values(by='importance', ascending=False)
         
-        # Save to a text file separated by tab
-        output_file = os.path.join(output_directory, 'feature_importance.txt')
-        importance_df.to_csv(output_file, sep='\t', index=False)
+        # Save to a text file
+        feature_importances.to_csv(os.path.join(output_directory,'feature_importance.txt'), sep='\t', index=False)
+        
+        # Summarize feature importances for plotting the normalized txt
+        feature_importances = pd.DataFrame({'feature': feature_names, 'importance': normalized_importances})
+        feature_importances = feature_importances.sort_values(by='importance', ascending=False)
+        
+        # Save to a text file
+        feature_importances.to_csv(os.path.join(output_directory,'feature_importance_normalized.txt'), sep='\t', index=False)
+        
+        
     #%% CREATION OF THE FINAL POINT CLOUD WITH THE PREDICTIONS FOR FURTHER LOADING
     
     pcd_testing_subset = pcd_testing[['X', 'Y', 'Z']].copy()

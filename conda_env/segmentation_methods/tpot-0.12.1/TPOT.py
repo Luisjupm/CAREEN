@@ -31,6 +31,7 @@ from tpot import TPOTClassifier
 from tpot import *
 import tpot
 
+
 def main():
 
     # Import all the parameters form the CMD
@@ -45,16 +46,16 @@ def main():
     test_file= config_data.get('INPUT_POINT_CLOUD_TESTING')
     train_file= config_data.get('INPUT_POINT_CLOUD_TRAINING')
     output_directory= config_data.get('OUTPUT_DIRECTORY')
-    features2include_path= config_data.get('INPUT_FEATURES')
-    generations=config_data['CONFIGURATION']['ge']
-    population_size=config_data['CONFIGURATION']['ps']
-    mutation_rate=config_data['CONFIGURATION']['mr']
-    crossover_rate=config_data['CONFIGURATION']['cr']
+    features2include_path= config_data.get('INPUT_FEATURES')                      
+    generations=config_data['CONFIGURATION']['generations']
+    population_size=config_data['CONFIGURATION']['population_size']
+    mutation_rate=config_data['CONFIGURATION']['mutation_rate']
+    crossover_rate=config_data['CONFIGURATION']['crossover_rate']
     cv=config_data['CONFIGURATION']['cv']
-    max_time_mins=config_data['CONFIGURATION']['mtm']
-    max_eval_time_mins=config_data['CONFIGURATION']['metm']
-    early_stop=config_data['CONFIGURATION']['ng']
-    scoring=config_data['CONFIGURATION']['s']
+    max_time_mins=config_data['CONFIGURATION']['max_time_mins']
+    max_eval_time_mins=config_data['CONFIGURATION']['max_eval_time_mins']
+    early_stop=config_data['CONFIGURATION']['early_stop']
+    scoring=config_data['CONFIGURATION']['scoring']
     
     # There are an issue with the f1 score. This score only accepts 0 and 1 lables. So if you introduce 3 and 4 labels, for example, throws and error
     if scoring=="f1":
@@ -87,7 +88,8 @@ def main():
     print("Value chosen for early stop = " + str(early_stop))
     # scoring=args.s
     print("Scoring chosen = " + str(scoring))
-   
+    
+    
     #Store in a Pandas dataframe the content of the file
     pcd_training=pd.read_csv(train_file,delimiter=' ')
     pcd_testing=pd.read_csv(test_file,delimiter=' ')
@@ -122,7 +124,6 @@ def main():
                                         early_stop=int(early_stop),
                                         random_state=None,
                                         verbosity=2,
-                                        n_jobs=1,
                                         use_dask=False
                                         )
        
@@ -161,4 +162,4 @@ def main():
     pcd_testing_subset.to_csv(os.path.join(output_directory, 'predictions.txt'), index=False)
 
 if __name__=='__main__':
-	main()
+ 	main()

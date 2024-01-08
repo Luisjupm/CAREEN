@@ -29,7 +29,7 @@ additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\main_module'
 
 sys.path.insert(0, additional_modules_directory)
 from main import P2p_getdata,get_istance,get_point_clouds_name, check_input, write_yaml_file
-from main_gui import show_features_window, definition_of_labels_type_1,definition_of_entries_type_1, definition_of_combobox_type_1
+from main_gui import show_features_window, definition_of_labels_type_1,definition_of_entries_type_1, definition_of_combobox_type_1,definition_ok_cancel_buttons_type_1,definition_run_cancel_buttons_type_1, definition_of_buttons_type_1
 #%% ADDING PATHS FROM THE CONFIGS FILES
 current_directory= os.path.dirname(os.path.abspath(__file__))
 
@@ -68,15 +68,20 @@ class GUI:
         
         # Random forest
         self.set_up_parameters_rf= {
-            "estimators": 200,
+            "n_estimators": 200,
             "criterion": "gini",
-            "trees": 100,
-            "internal_node": 2,
-            "leaf_node": 1,
-            "weights": 0,
-            "features": "sqrt",
-            "bootstrap": True,
-            "njobs": -1
+            "max_depth": 0,
+            "min_samples_split": 2,
+            "min_samples_leaf": 1,
+            "min_weight_fraction_leaf": 0,
+            "max_features": "sqrt",
+            "max_leaf_nodes": 0,
+            "min_impurity_decrease": 0,
+            "bootstrap": "True",
+            "class_weight": "None",
+            "ccp_alpha": 0,
+            "max_samples": 0,
+            "n_jobs": -1
             }
         
         # Support Vector Machine- Support Vector Classification
@@ -114,14 +119,14 @@ class GUI:
         # Auto-ml
         self.set_up_parameters_aml= {
             "generations": 5,
-            "size": 20,
-            "mutation": 0.9,
-            "crossover": 0.1,
-            "cv": 2,
-            "max_time_total": 60,
-            "max_time_ev": 10,
-            "no_improvement":2,
-            "scoring": "balanced_accuracy"
+            "population_size": 20,
+            "mutation_rate": 0.9,
+            "crossover_rate": 0.1,
+            "scoring": "balanced_accuracy",
+            "cv": 5,
+            "max_time_mins": 60,
+            "max_eval_time_mins": 5,
+            "early_stop": 0         
             }     
 
         # Directory to save the files (output)
@@ -174,15 +179,20 @@ class GUI:
         # Safe the set_up_paramenters in accordance with the GUI
         def save_setup_parameters (self,algo,*params): 
             if algo=="Random Forest":
-                self.set_up_parameters_rf["estimators"]=params[0]
+                self.set_up_parameters_rf["n_estimators"]=params[0]
                 self.set_up_parameters_rf["criterion"]=params[1]
-                self.set_up_parameters_rf["trees"]=params[2]
-                self.set_up_parameters_rf["internal_node"]=params[3]
-                self.set_up_parameters_rf["leaf_node"]=params[4]
-                self.set_up_parameters_rf["weights"]=params[5]
-                self.set_up_parameters_rf["features"]=params[6]
-                self.set_up_parameters_rf["bootstrap"]=params[7]
-
+                self.set_up_parameters_rf["max_depth"]=params[2]
+                self.set_up_parameters_rf["min_samples_split"]=params[3]
+                self.set_up_parameters_rf["min_samples_leaf"]=params[4]
+                self.set_up_parameters_rf["min_weight_fraction_leaf"]=params[5]
+                self.set_up_parameters_rf["max_features"]=params[6]
+                self.set_up_parameters_rf["max_leaf_nodes"]=params[7]
+                self.set_up_parameters_rf["min_impurity_decrease"]=params[8]
+                self.set_up_parameters_rf["bootstrap"]=params[9]
+                self.set_up_parameters_rf["class_weight"]=params[10]
+                self.set_up_parameters_rf["ccp_alpha"]=params[11]
+                self.set_up_parameters_rf["max_samples"]=params[12]            
+                self.set_up_parameters_rf["n_jobs"]=params[13]             
                 
             elif algo=="Support Vector Machine":
                 self.set_up_parameters_svm_svc ["c"]=params[0]
@@ -210,17 +220,19 @@ class GUI:
                 self.set_up_parameters_lr ["max_iter"]=params[8]
                 self.set_up_parameters_lr ["multi_class"]=params[9]
                 self.set_up_parameters_lr ["l1_ratio"]=params[10]
+                self.set_up_parameters_lr ["n_jobs"]=params[11]
                
-            elif algo=="Auto Machine Learning":
+            elif algo=="Auto Machine Learning":             
+              
                 self.set_up_parameters_aml["generations"]=params[0]
-                self.set_up_parameters_aml["size"]=params[1]
-                self.set_up_parameters_aml["mutation"]=params[2]
-                self.set_up_parameters_aml["crossover"]=params[3]
-                self.set_up_parameters_aml["cv"]=params[4]
-                self.set_up_parameters_aml["max_time_total"]=params[5]
-                self.set_up_parameters_aml["max_time_ev"]=params[6]
-                self.set_up_parameters_aml["no_improvement"]=params[7]
-                self.set_up_parameters_aml["scoring"]=params[8]
+                self.set_up_parameters_aml["population_size"]=params[1]
+                self.set_up_parameters_aml["mutation_rate"]=params[2]
+                self.set_up_parameters_aml["crossover_rate"]=params[3]
+                self.set_up_parameters_aml["scoring"]=params[4]
+                self.set_up_parameters_aml["cv"]=params[5]
+                self.set_up_parameters_aml["max_time_mins"]=params[6]
+                self.set_up_parameters_aml["max_eval_time_mins"]=params[7]
+                self.set_up_parameters_aml["early_stop"]=params[8]
                 
         # Load the configuration files for prediction
         def load_configuration_dialog():
@@ -241,13 +253,14 @@ class GUI:
                     
             def on_ok_button_click(algo):
                 if algo=="Random Forest":
-                    save_setup_parameters(self,algo, int(entry_param1_rf.get()), str(combo_param2_rf.get()), int(entry_param3_rf.get()), int(entry_param4_rf.get()), int(entry_param5_rf.get()), int(entry_param6_rf.get()), str(combo_param7_rf.get()), bool(combo_param8_rf.get()))
+                    save_setup_parameters(self,algo, int(rf_entries[0].get()), str(rf_comboboxes[1].get()),int(rf_entries[2].get()),float(rf_entries[3].get()),float(rf_entries[4].get()),float(rf_entries[5].get()),str(rf_comboboxes[6].get()),int(rf_entries[7].get()),float(rf_entries[8].get()),str(rf_comboboxes[9].get()),str(rf_comboboxes[10].get()),float(rf_entries[11].get()),int(rf_entries[12].get()),int(rf_entries[13].get()))
                 elif algo=="Support Vector Machine":
                     save_setup_parameters(self, algo,float(svm_scv_entries[0].get()),str(svm_scv_comboboxes[1].get()),int(svm_scv_entries[2].get()),str(svm_scv_comboboxes[3].get()),float(svm_scv_entries[4].get()),str(svm_scv_comboboxes[5].get()),str(svm_scv_comboboxes[6].get()),float(svm_scv_entries[7].get()),str(svm_scv_comboboxes[8].get()),int(svm_scv_entries[9].get()),str(svm_scv_comboboxes[10].get()),str(svm_scv_comboboxes[11].get()))
                 elif algo=="Logistic Regression":
-                    save_setup_parameters(self, algo,str(lr_comboboxes[0].get()),str(lr_comboboxes[1].get()),float(lr_entries[2].get()),float(lr_entries[3].get()),str(lr_comboboxes[4].get()),float(lr_entries[5].get()),str(lr_comboboxes[6].get()),str(lr_comboboxes[7].get()),int(lr_entries[8].get()),str(lr_comboboxes[9].get()),float(lr_entries[10].get()))
+                    save_setup_parameters(self, algo,str(lr_comboboxes[0].get()),str(lr_comboboxes[1].get()),float(lr_entries[2].get()),float(lr_entries[3].get()),str(lr_comboboxes[4].get()),float(lr_entries[5].get()),str(lr_comboboxes[6].get()),str(lr_comboboxes[7].get()),int(lr_entries[8].get()),str(lr_comboboxes[9].get()),float(lr_entries[10].get()),int(lr_entries[11].get()))
                 elif algo=="Auto Machine Learning":                    
-                    save_setup_parameters(self,algo, int(entry_param1_aml.get()), int(entry_param2_aml.get()), float(entry_param3_aml.get()), float(entry_param4_aml.get()), int(entry_param5_aml.get()), int(entry_param6_aml.get()), int(entry_param7_aml.get()), int(entry_param8_aml.get()), str(combo_param9_aml.get()))
+                    save_setup_parameters(self,algo,int(aml_entries[0].get()),int(aml_entries[1].get()),float(aml_entries[2].get()),float(aml_entries[3].get()),str(aml_comboboxes[4].get()),int(aml_entries[5].get()),int(aml_entries[6].get()),int(aml_entries[7].get()),int(aml_entries[8].get()))
+                    # Entries
 
                 set_up_window.destroy()  # Close the window after saving parameters
                 
@@ -259,61 +272,56 @@ class GUI:
             set_up_window.attributes ('-toolwindow',-1)
                
             if algo=="Random Forest":
-                
+               
                 #Labels        
                 label_texts = [
-                    "Number of estimators:",
-                    "Criterion:",
-                    "Maximum depth of trees:",
-                    "Minimum number of samples required to Split the internal node:",
-                    "Minimum number of samples required to be a leaf node:",
-                    "Minimum weight fraction of the total sum of weights:",
-                    "Maximum number of features:",
-                    "Bootstrap:",
+                    "Number of trees:",
+                    "Function to measure the quality of a split:",
+                    "Maximum depth of the tree:",
+                    "Minimum number of samples for splitting:",
+                    "Minimum number of samples to at a leaf node:",
+                    "Minimum weighted fraction:",
+                    "Number of features to consider for best split:",
+                    "Maximum number of leaf nodes:",
+                    "Impurity to split the node:",
+                    "Use of bootstrap:",
+                    "Weights associated to the classes:",
+                    "Complexity parameter used for Minimal cost:",
+                    "Number of samples to draw to train each base estimator:",
+                    "Number of cores to use (-1 means all):"
                 ]
-                row_positions = [0,1,2,3,4,5,6,7]        
+                row_positions = [0,1,2,3,4,5,6,7,8,9,10,11,12,13]        
                 definition_of_labels_type_1 ("rf",label_texts,row_positions,set_up_window,0)
 
-                
-                # Entries                
+                # Entries
+                entry_insert = [
+                    self.set_up_parameters_rf ["n_estimators"],
+                    self.set_up_parameters_rf["max_depth"],
+                    self.set_up_parameters_rf["min_samples_split"],
+                    self.set_up_parameters_rf["min_samples_leaf"],
+                    self.set_up_parameters_rf["min_weight_fraction_leaf"],
+                    self.set_up_parameters_rf["max_leaf_nodes"],
+                    self.set_up_parameters_rf["min_impurity_decrease"],
+                    self.set_up_parameters_rf["ccp_alpha"],
+                    self.set_up_parameters_rf["max_samples"],
+                    self.set_up_parameters_rf["n_jobs"]
+                    ]
+                row_positions = [0,2,3,4,5,7,8,11,12,13]        
+                rf_entries = definition_of_entries_type_1 ("rf",entry_insert,row_positions,set_up_window,1) 
+
+                # Combobox
+                combobox_insert = [
+                    ["gini","entropy","log_loss"],
+                    ['sqrt','log2'],
+                    ['True','False'],
+                    ['No',"balanced","balanced_subsample"]
+                    ]
+                row_positions = [1,6,9,10]
+                selected_element = ["gini","sqrt","True"]
+                rf_comboboxes =definition_of_combobox_type_1 ("rf",combobox_insert,row_positions, selected_element,set_up_window,1)                                 
         
-                entry_param1_rf= tk.Entry(set_up_window, width=10)
-                entry_param1_rf.insert(0,self.set_up_parameters_rf["estimators"])
-                entry_param1_rf.grid(row=0, column=1, sticky="e")
-                
-                criterion = ["gini","entropy","log_loss"]
-                combo_param2_rf=ttk.Combobox (set_up_window, values=criterion, state="readonly")
-                combo_param2_rf.set(self.set_up_parameters_rf["criterion"])
-                combo_param2_rf.grid(column=1, row=1, sticky="e", pady=2)
-                
-                entry_param3_rf= ttk.Entry(set_up_window, width=10)
-                entry_param3_rf.insert(0,self.set_up_parameters_rf["trees"])
-                entry_param3_rf.grid(row=2, column=1, sticky="e")
-                
-                entry_param4_rf= ttk.Entry(set_up_window, width=10)
-                entry_param4_rf.insert(0,self.set_up_parameters_rf["internal_node"])
-                entry_param4_rf.grid(row=3, column=1, sticky="e")
-                
-                entry_param5_rf= ttk.Entry(set_up_window, width=10)
-                entry_param5_rf.insert(0,self.set_up_parameters_rf["leaf_node"])
-                entry_param5_rf.grid(row=4, column=1, sticky="e")
-                
-                entry_param6_rf= ttk.Entry(set_up_window, width=10)
-                entry_param6_rf.insert(0,self.set_up_parameters_rf["weights"])
-                entry_param6_rf.grid(row=5, column=1, sticky="e")
-                
-                max_n_features = ['sqrt','log2']
-                combo_param7_rf=ttk.Combobox (set_up_window, values=max_n_features, state="readonly")
-                combo_param7_rf.set(self.set_up_parameters_rf["features"])
-                combo_param7_rf.grid(column=1, row=6, sticky="e", pady=2)
-                
-                bootstrap= [True, False]
-                combo_param8_rf=ttk.Combobox (set_up_window, values=bootstrap, state="readonly")
-                combo_param8_rf.set("No selected")
-                combo_param8_rf.grid(column=1, row=7, sticky="e", pady=2)
-                               
-                ok_button = ttk.Button(set_up_window, text="OK", command=lambda: on_ok_button_click(algo), width=10)
-                ok_button.grid(row=9, column=1, sticky="w", padx=100)
+                # Buttons  
+                _=definition_ok_cancel_buttons_type_1('rf',[lambda: on_ok_button_click(algo),None],14,set_up_window,1)
                 
             elif algo== "Support Vector Machine":
                 
@@ -360,8 +368,8 @@ class GUI:
                 selected_element = ["rbf","scale","True","False","No","ovr","False"]
                 svm_scv_comboboxes =definition_of_combobox_type_1 ("svm_scv",combobox_insert,row_positions, selected_element,set_up_window,1)
                             
-                svm_scv_button_ok = ttk.Button(set_up_window, text="OK", command=lambda: on_ok_button_click(algo), width=10)
-                svm_scv_button_ok.grid(row=12, column=1, sticky="w", padx=100)   
+                # Buttons  
+                _=definition_ok_cancel_buttons_type_1("svm_scv",[lambda: on_ok_button_click(algo),None],12,set_up_window,1) 
                 
             elif algo== "Logistic Regression":
                 
@@ -377,9 +385,10 @@ class GUI:
                     "Type of solver:",
                     "Max number of iterations:",
                     "Type of multiclass fitting strategy:",
-                    "Elastic-Net mixing parameter:"
+                    "Elastic-Net mixing parameter:",
+                    "Number of cores to use (-1 means all):"
                 ]
-                row_positions = [0,1,2,3,4,5,6,7,8,9,10]        
+                row_positions = [0,1,2,3,4,5,6,7,8,9,10,11]        
                 definition_of_labels_type_1 ("lr",label_texts,row_positions,set_up_window,0)
 
                 # Entries
@@ -388,9 +397,10 @@ class GUI:
                     self.set_up_parameters_lr["c"],
                     self.set_up_parameters_lr ["intercept_scaling"],
                     self.set_up_parameters_lr ["max_iter"],
-                    self.set_up_parameters_lr ["l1_ratio"]
+                    self.set_up_parameters_lr ["l1_ratio"],
+                    self.set_up_parameters_lr ["n_jobs"]
                     ]
-                row_positions = [2,3,5,8,10]        
+                row_positions = [2,3,5,8,10,11]        
                 lr_entries = definition_of_entries_type_1 ("lr",entry_insert,row_positions,set_up_window,1) 
                 
                 # Combobox
@@ -406,66 +416,50 @@ class GUI:
                 selected_element = ["l2","False","True","No","lbfgs","auto"]
                 lr_comboboxes =definition_of_combobox_type_1 ("lr",combobox_insert,row_positions, selected_element,set_up_window,1)
                 
-                lr_button_ok = ttk.Button(set_up_window, text="OK", command=lambda: on_ok_button_click(algo), width=10)
-                lr_button_ok.grid(row=12, column=1, sticky="w", padx=100)   
+                # Buttons  
+                _=definition_ok_cancel_buttons_type_1("lr",[lambda: on_ok_button_click(algo),None],12,set_up_window,1)   
                     
             elif algo=="Auto Machine Learning":
-                
+          
                 # Labels
                 label_texts = [
-                    "Generations:",
+                    "Number of generations:",
                     "Population size:",
                     "Mutation rate:",
                     "Crossover rate:",
-                    "Number of flods for k-fold cross-validation:",
-                    "Maximum time in mins for the evaluation:",
-                    "Maximum time in mins for each evaluation:",
+                    "Function used to evaluate the quality:",
+                    "Cross-validation:",
+                    "Maximum total time (mins):",
+                    "Maximum time per evaluation (mins):",
                     "Number of generations without improvement:",
-                    "Scoring:"
                 ]
+                
                 row_positions = [0,1,2,3,4,5,6,7,8]        
-                definition_of_labels_type_1 ("aml",label_texts,row_positions,set_up_window,1)                     
+                definition_of_labels_type_1 ("aml",label_texts,row_positions,set_up_window,1)  
                 
-                # Entries
-                entry_param1_aml= ttk.Entry(set_up_window, width=10)
-                entry_param1_aml.insert(0,self.set_up_parameters_aml["generations"])
-                entry_param1_aml.grid(row=0, column=1, sticky="e")
+                entry_insert = [
+                    self.set_up_parameters_aml["generations"],
+                    self.set_up_parameters_aml["population_size"],
+                    self.set_up_parameters_aml["mutation_rate"],
+                    self.set_up_parameters_aml["crossover_rate"],
+                    self.set_up_parameters_aml["cv"],
+                    self.set_up_parameters_aml["max_time_mins"],
+                    self.set_up_parameters_aml["max_eval_time_mins"],
+                    self.set_up_parameters_aml["early_stop"]                  
+                    ]
+                row_positions = [0,1,2,3,5,6,7,8]        
+                aml_entries = definition_of_entries_type_1 ("aml",entry_insert,row_positions,set_up_window,1) 
                 
-                entry_param2_aml= ttk.Entry(set_up_window, width=10)
-                entry_param2_aml.insert(0,self.set_up_parameters_aml["size"])
-                entry_param2_aml.grid(row=1, column=1, sticky="e")
-                
-                entry_param3_aml= ttk.Entry(set_up_window, width=10)
-                entry_param3_aml.insert(0,self.set_up_parameters_aml["mutation"])
-                entry_param3_aml.grid(row=2, column=1, sticky="e")
-                
-                entry_param4_aml= ttk.Entry(set_up_window, width=10)
-                entry_param4_aml.insert(0,self.set_up_parameters_aml["crossover"])
-                entry_param4_aml.grid(row=3, column=1, sticky="e")
-                
-                entry_param5_aml= ttk.Entry(set_up_window, width=10)
-                entry_param5_aml.insert(0,self.set_up_parameters_aml["cv"])
-                entry_param5_aml.grid(row=4, column=1, sticky="e")
-                
-                entry_param6_aml= ttk.Entry(set_up_window, width=10)
-                entry_param6_aml.insert(0,self.set_up_parameters_aml["max_time_total"])
-                entry_param6_aml.grid(row=5, column=1, sticky="e")
-                
-                entry_param7_aml= ttk.Entry(set_up_window, width=10)
-                entry_param7_aml.insert(0,self.set_up_parameters_aml["max_time_ev"])
-                entry_param7_aml.grid(row=6, column=1, sticky="e")
-                
-                entry_param8_aml= ttk.Entry(set_up_window, width=10)
-                entry_param8_aml.insert(0,self.set_up_parameters_aml["no_improvement"])
-                entry_param8_aml.grid(row=7, column=1, sticky="e")
-                
-                scoring=["balanced_accuracy","accuracy","f1","f1_weighted","precision","precision_weighted"]
-                combo_param9_aml=ttk.Combobox (set_up_window, values=scoring, state="readonly")
-                combo_param9_aml.set(self.set_up_parameters_aml["scoring"])
-                combo_param9_aml.grid(column=1, row=8, sticky="e", pady=2)
-                
-                ok_button = ttk.Button(set_up_window, text="OK", command=lambda: on_ok_button_click(algo), width=10)
-                ok_button.grid(row=9, column=1, sticky="w", padx=100) 
+                # Combobox
+                combobox_insert = [
+                    ["balanced_accuracy","accuracy","f1","f1_weighted","precision","precision_weighted"]
+                    ]
+                row_positions = [4]
+                selected_element = ["accuracy"]
+                aml_comboboxes =definition_of_combobox_type_1 ("aml",combobox_insert,row_positions, selected_element,set_up_window,1)
+                                              
+                # Buttons  
+                _=definition_ok_cancel_buttons_type_1("aml",[lambda: on_ok_button_click(algo),None],9,set_up_window,1) 
                 
             
         # GENERAL CONFIGURATION OF THE GUI
@@ -536,19 +530,22 @@ class GUI:
         t1_entry_widget.grid(row=5, column=1, sticky="e", pady=2)
         t1_entry_widget.insert(0, self.output_directory)
 
-        # Button
-        t1_ok_button_selectors = tk.Button(tab1, text="OK", command=on_ok_button_click,width=10)
-        t1_ok_button_selectors.grid(row=1, column=2, pady=10)
-        t1_output = ttk.Button(tab1, text="...", command=lambda:save_file_dialog(1), width=10)
-        t1_output.grid(row=5, column=2, sticky="e", padx=100)
-        t1_features= ttk.Button (tab1, text="...", command=lambda: show_features_window(self,name_list,t1_combo_point_cloud.get()), width=10)
-        t1_features.grid (row=2,column=2,sticky="e",padx=100)
-        
-        t1_run_button= ttk.Button (tab1, text="Run", command=lambda:run_algorithm_1(self,name_list,t1_combo_point_cloud.get(),listbox.curselection(),int(t1_entry_percentage.get()),int(t1_entry_cv.get())), width=10)
-        t1_run_button.grid (row=6,column=1,sticky="e",padx=100)
-        t1_cancel_button= ttk.Button (tab1, text="Cancel", command=lambda:destroy,width=10)
-        t1_cancel_button.grid (row=6,column=1,sticky="e")
-        
+        # Buttons
+        row_buttons=[1,5,2]  
+        button_names=["OK","...","..."]  
+        _=definition_of_buttons_type_1("tab1",
+                                       button_names,
+                                       row_buttons,
+                                       [on_ok_button_click,lambda:save_file_dialog(1),lambda: show_features_window(self,name_list,t1_combo_point_cloud.get())],
+                                       tab1,
+                                       2
+                                       ) 
+        _=definition_run_cancel_buttons_type_1("tab1",
+                                     [lambda:run_algorithm_1(self,name_list,t1_combo_point_cloud.get(),listbox.curselection(),int(t1_entry_percentage.get()),int(t1_entry_cv.get())),lambda:destroy(self)],
+                                     6,
+                                     tab1,
+                                     1
+                                     ) 
         # TAB2 = CLASSIFICATION
 
         # Labels
@@ -580,20 +577,26 @@ class GUI:
         t2_entry_widget = ttk.Entry(tab2, width=30)
         t2_entry_widget.grid(row=4, column=1, sticky="e", pady=2)
         t2_entry_widget.insert(0, self.output_directory)
+               
+        # Buttons  
+        row_buttons=[2,3,4]  
+        button_names=["Set-up","...","..."]  
+        _=definition_of_buttons_type_1("tab2",
+                                       button_names,
+                                       row_buttons,
+                                       [lambda: show_set_up_window(self,t2_combo_algo.get()),lambda: show_features_window(self,name_list,t2_combo_point_cloud_training.get()),lambda:save_file_dialog(2)],
+                                       tab2,
+                                       2
+                                       ) 
         
-        # Button
-        t2_setup_button= ttk.Button (tab2, text="Set-up", command=lambda: show_set_up_window(self,t2_combo_algo.get()), width=10)
-        t2_setup_button.grid (row=2,column=2,sticky="e",padx=100)
-        t2_features_button= ttk.Button (tab2, text="...", command=lambda: show_features_window(self,name_list,t2_combo_point_cloud_training.get()), width=10)
-        t2_features_button.grid (row=3,column=2,sticky="e",padx=100)
-        t2_output = ttk.Button(tab2, text="...", command=lambda:save_file_dialog(2), width=10)
-        t2_output.grid(row=4, column=2, sticky="e", padx=100)
+        _=definition_run_cancel_buttons_type_1("tab2",
+                                     [lambda:run_algorithm_2(self,t2_combo_algo.get(),t2_combo_point_cloud_training.get(),t2_combo_point_cloud_testing.get()),lambda:destroy(self)],
+                                     5,
+                                     tab2,
+                                     1
+                                     ) 
     
-        t2_run_button= ttk.Button (tab2, text="Run", command=lambda:run_algorithm_2(self,t2_combo_algo.get(),t2_combo_point_cloud_training.get(),t2_combo_point_cloud_testing.get()), width=10)
-        t2_run_button.grid (row=5,column=1,sticky="e",padx=100)
-        t2_cancel_button= ttk.Button (tab2, text="Cancel", command=lambda:destroy,width=10)
-        t2_cancel_button.grid (row=5,column=1,sticky="e")
-        
+       
         # TAB3 = PREDICTION
 
         # Labels
@@ -617,18 +620,17 @@ class GUI:
         t3_entry_widget.grid(row=3, column=1, sticky="e", pady=2)
         t3_entry_widget.insert(0, self.output_directory)
 
-        # Button
-        t3_features= ttk.Button (tab3, text="...", command=lambda: load_features_dialog(), width=10)
-        t3_features.grid (row=1,column=2,sticky="e",padx=100)
-        t3_configuration= ttk.Button (tab3, text="...", command=lambda: load_configuration_dialog(), width=10)
-        t3_configuration.grid(row=2,column=2,sticky="e",padx=100)
-        t3_output = ttk.Button(tab3, text="...", command=lambda:save_file_dialog(3), width=10)
-        t3_output.grid(row=3, column=2, sticky="e", padx=100)
-
-        t3_run_button= ttk.Button (tab3, text="Run", command=lambda:run_algorithm_3(self,t3_combo_1.get(),load_features,load_configuration), width=10)
-        t3_run_button.grid (row=4,column=1,sticky="e",padx=100)
-        t3_cancel_button= ttk.Button (tab3, text="Cancel", command=lambda:destroy,width=10)
-        t3_cancel_button.grid (row=4,column=1,sticky="e")
+        # Buttons
+        row_buttons=[1,2,3]  
+        button_names=["...","...","..."]  
+        _=definition_of_buttons_type_1("tab3",button_names,row_buttons,[lambda: load_features_dialog(),lambda: load_configuration_dialog(),lambda:save_file_dialog(3)],tab3,2 ) 
+        
+        _=definition_run_cancel_buttons_type_1("tab3",
+                                     [lambda:run_algorithm_3(self,t3_combo_1.get(),load_features,load_configuration),lambda:destroy(self)],
+                                     4,
+                                     tab3,
+                                     1
+                                     ) 
         
         # To run the optimal flow   
         def run_algorithm_1 (self,name_list,pc_training_name,selected_indices,f,cv): 
@@ -705,15 +707,20 @@ class GUI:
                     'ALGORITHM': "Random_forest",
                     'CONFIGURATION': 
                         {
-                        'ne': self.set_up_parameters_rf["estimators"],
-                        'c': self.set_up_parameters_rf["criterion"],
-                        'md': self.set_up_parameters_rf["trees"],
-                        'ms': self.set_up_parameters_rf["internal_node"],
-                        'mns': self.set_up_parameters_rf["leaf_node"],
-                        'mwf': self.set_up_parameters_rf["weights"],
-                        'mf': self.set_up_parameters_rf["features"],
-                        'bt': self.set_up_parameters_rf["bootstrap"],
-                        'nj': self.set_up_parameters_rf["njobs"]
+                        'n_estimators': self.set_up_parameters_rf["n_estimators"],
+                        'criterion': self.set_up_parameters_rf["criterion"],
+                        'max_depth': self.set_up_parameters_rf["max_depth"],
+                        'min_samples_split': self.set_up_parameters_rf["min_samples_split"],
+                        'min_samples_leaf': self.set_up_parameters_rf["min_samples_leaf"],
+                        'min_weight_fraction_leaf': self.set_up_parameters_rf["min_weight_fraction_leaf"],
+                        'max_features': self.set_up_parameters_rf["max_features"],
+                        'max_leaf_nodes': self.set_up_parameters_rf["max_leaf_nodes"],
+                        'min_impurity_decrease': self.set_up_parameters_rf["min_impurity_decrease"],
+                        'bootstrap': self.set_up_parameters_rf["bootstrap"],
+                        'class_weight': self.set_up_parameters_rf["class_weight"],
+                        'ccp_alpha': self.set_up_parameters_rf["ccp_alpha"],
+                        'max_samples': self.set_up_parameters_rf["max_samples"],
+                        'n_jobs': self.set_up_parameters_rf["n_jobs"]
                         }
                 }                          
                 write_yaml_file (self.output_directory,yaml)
@@ -744,23 +751,9 @@ class GUI:
                         'break_ties': self.set_up_parameters_svm_svc["break_ties"]
                         }
                 } 
-                # Logistic regression multilabel
-                self.set_up_parameters_lr= {
-                    "penalty": "l2",
-                    "dual": False,
-                    "tol": 0.0001,
-                    "c": 1,
-                    "fit_intercept": True,
-                    "intercept_scaling": 1.0,
-                    "class_weight": "No",
-                    "solver": 'lbfgs',
-                    "max_iter": 100,
-                    "multi_class": 'auto',
-                    "n_jobs":-1,
-                    "l1_ratio":0       
-                    }
                 write_yaml_file (self.output_directory,yaml)
                 command = path_support_vector_machine + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
+           
             elif algo=="Logistic Regression":
                 # YAML file
                 yaml = {
@@ -782,10 +775,12 @@ class GUI:
                         'max_iter': self.set_up_parameters_lr["max_iter"],
                         'multi_class': self.set_up_parameters_lr["multi_class"],
                         'l1_ratio': self.set_up_parameters_lr["l1_ratio"],
+                        'nj': self.set_up_parameters_lr["n_jobs"]
                         }
                 }
                 write_yaml_file (self.output_directory,yaml)
                 command = path_linear_regression + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
+           
             elif algo=="Auto Machine Learning":                
                 # Join the list items with commas to create a comma-separated string
                 comma_separated = ','.join(self.features2include)    
@@ -801,22 +796,24 @@ class GUI:
                     'ALGORITHM': "TPOT",
                     'CONFIGURATION': 
                         {
-                        'ge': self.set_up_parameters_aml["generations"],
-                        'ps': self.set_up_parameters_aml["size"],
-                        'mr': self.set_up_parameters_aml["mutation"],
-                        'cr': self.set_up_parameters_aml["crossover"],
+                        'generations': self.set_up_parameters_aml["generations"],
+                        'population_size': self.set_up_parameters_aml["population_size"],
+                        'mutation_rate': self.set_up_parameters_aml["mutation_rate"],
+                        'crossover_rate': self.set_up_parameters_aml["crossover_rate"],
+                        'scoring': self.set_up_parameters_aml["scoring"],
                         'cv': self.set_up_parameters_aml["cv"],
-                        'mtm': self.set_up_parameters_aml["max_time_total"],
-                        'metm': self.set_up_parameters_aml["max_time_ev"],
-                        'ng': self.set_up_parameters_aml["no_improvement"],
-                        's': self.set_up_parameters_aml["scoring"]
+                        'max_time_mins': self.set_up_parameters_aml["max_time_mins"],
+                        'max_eval_time_mins': self.set_up_parameters_aml["max_eval_time_mins"],
+                        'early_stop': self.set_up_parameters_aml["early_stop"],
                         }
                 } 
                 write_yaml_file (self.output_directory,yaml)
                 command = path_aml + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
             
             # RUN THE COMMAND LINE
-            os.system(command)            
+            print (command)
+            # os.system(command)    
+
 
             # CREATE THE RESULTING POINT CLOUD 
             # Load the predictions

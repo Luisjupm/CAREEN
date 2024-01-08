@@ -333,9 +333,17 @@ class GUI:
         cropped_initial_point_cloud_z_restriction.points = o3d.utility.Vector3dVector(reduced_points_z_numpy)
         
         # Perform DBSCAN clustering
+        # Rotation of the point cloud according with the angle
+        pc_results_prediction = pycc.ccPointCloud(reduced_points_z_numpy [:,0], reduced_points_z_numpy [:,1], reduced_points_z_numpy [:,2])
+        pc_results_prediction.setName("Estimated_axis_of_the_vault")
+        
+        # Store in the database of CloudCompare
+        CC.addToDB(pc_results_prediction)
+        CC.updateUI()
         labels = cropped_initial_point_cloud_z_restriction.cluster_dbscan(eps=self.vault_parameters["e"], min_points=self.vault_parameters["min_points"])
         labels= np.asarray (labels)        
         num_clusters = len(set(labels)) - (1 if -1 in labels else 0) # Number of clusters in labels, ignoring noise if present (-1 is noise)
+        
         if num_clusters==2:
             # Initialize arrays to hold cluster points
             cluster_1 = np.empty((0, 3))
@@ -347,7 +355,9 @@ class GUI:
                 if cluster_label == 0:
                     cluster_1 = np.vstack((cluster_1, cluster_points))
                 elif cluster_label == 1:
-                    cluster_2 = np.vstack((cluster_2, cluster_points))           
+                    cluster_2 = np.vstack((cluster_2, cluster_points)) 
+        else:
+            raise RuntimeError("It was not possible to determine the axis of the vault. Please review the maximum and mininum height as well as the expected clearance parameters") 
 
         # Calculate total length of the segment
         total_length = np.sum(np.linalg.norm(np.diff(cluster_1, axis=0), axis=1))
