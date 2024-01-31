@@ -171,35 +171,37 @@ def show_features_window(self,name_list,training_pc_name="Not selected",excluded
         checkbuttons_vars.append(var)
         ttk.Checkbutton(features_frame, text=value, variable=var).pack(anchor="w")
         
-        
-def definition_of_labels_type_1 (header,label_texts,row_positions,window,column=0):
-    
+def definition_of_labels_type_1(header, label_texts, row_positions, window, column=0, disable_labels=False):
     """
-    This fuction allows to create the labels of a tab
-        
+    This function allows to create the labels of a tab
+
     Parameters
     ----------
-    header (str): name of the label. It will be as: header_label_idx. Where idx is the row on which the label appears. I.e t1_label_1 the header is t1 and the row is 1 for this element
-    
-    label_text (list) a list with the name of each label
-    
+    header (str): name of the label. It will be as: header_label_idx. Where idx is the row on which the label appears.
+                  I.e t1_label_1 the header is t1 and the row is 1 for this element
+
+    label_texts (list): a list with the name of each label
+
     row_positions (list): a list with the position (rows) of each label text
-        
+
     window (tk window): the window on which the information will be rendered
-    
+
     column (int): the column to place the labels. Default: 0
-    
-   
+
+    disable_labels (bool): If True, the labels will be disabled. Default: False
+
     Returns
     -------
 
-    """      
-   
-    labels = {}  # Dictionary to store labels    
+    """
+    labels = {}  # Dictionary to store labels
     for idx, (text, row) in enumerate(zip(label_texts, row_positions)):
         label_name = f"{header}_label_{idx}"
         labels[label_name] = ttk.Label(window, text=text)
-        labels[label_name].grid(column=column, row=row, pady=2, sticky="w")     
+        labels[label_name].grid(column=column, row=row, pady=2, sticky="w")
+        
+        if disable_labels:
+            labels[label_name].config(state=tk.DISABLED)
 
 def definition_of_entries_type_1 (header,entry_insert,row_positions,window,column=1):
     

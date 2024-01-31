@@ -49,8 +49,9 @@ path_aml= os.path.join(current_directory,config_data['TPOT'])
 name_list=get_point_clouds_name()
 
 #%% GUI
-class GUI:
-    def __init__(self): # Initial parameters. It is in self because we can update during the interaction with the user
+class GUI_mls(tk.Frame):
+    def __init__(self, master=None, **kwargs): # Initial parameters. It is in self because we can update during the interaction with the user
+        super().__init__(master, **kwargs)
        
         # Features2include
         self.features2include=[] 
@@ -248,9 +249,7 @@ class GUI:
                 load_features = file_path      
                 
         # Window for the configuration of the machine learning algorithms
-        def show_set_up_window (self,algo): 
-            
-                    
+        def show_set_up_window (self,algo):      
             def on_ok_button_click(algo):
                 if algo=="Random Forest":
                     save_setup_parameters(self,algo, int(rf_entries[0].get()), str(rf_comboboxes[1].get()),int(rf_entries[2].get()),float(rf_entries[3].get()),float(rf_entries[4].get()),float(rf_entries[5].get()),str(rf_comboboxes[6].get()),int(rf_entries[7].get()),float(rf_entries[8].get()),str(rf_comboboxes[9].get()),str(rf_comboboxes[10].get()),float(rf_entries[11].get()),int(rf_entries[12].get()),int(rf_entries[13].get()))
@@ -812,7 +811,7 @@ class GUI:
             
             # RUN THE COMMAND LINE
             print (command)
-            # os.system(command)    
+            os.system(command)    
 
 
             # CREATE THE RESULTING POINT CLOUD 
@@ -880,19 +879,25 @@ class GUI:
             # Revome files
             os.remove(os.path.join(self.output_directory, 'input_point_cloud_prediction.txt'))
             os.remove(os.path.join(self.output_directory,'algorithm_configuration.yaml'))
-            print("The process has been finished") 
+            print("The process has been finished")
+            
+    def show_frame(self,root):
+        self.main_frame(root)
+        self.grid(row=1, column=0, pady=10)
+
+    def hide_frame(self):
+        self.grid_forget()
          
-                 
-              
-#%% RUN THE GUI        
-try:
-    # START THE MAIN WINDOW        
-    root = tk.Tk()
-    app = GUI()
-    app.main_frame(root)
-    root.mainloop()    
-except Exception as e:
-    print("An error occurred during the computation of the algorithm:", e)
-    # Optionally, print detailed traceback
-    traceback.print_exc()
-    root.destroy()
+#%% RUN THE GUI
+if __name__ == "__main__":        
+    try:
+        # START THE MAIN WINDOW        
+        root = tk.Tk()
+        app = GUI_mls()
+        app.main_frame(root)
+        root.mainloop()    
+    except Exception as e:
+        print("An error occurred during the computation of the algorithm:", e)
+        # Optionally, print detailed traceback
+        traceback.print_exc()
+        root.destroy()
