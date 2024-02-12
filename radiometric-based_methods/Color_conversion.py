@@ -12,6 +12,7 @@ import pycc
 import colorsys
 import os
 import sys
+import traceback
 
 # ADDING THE MAIN MODULE FOR ADDITIONAL FUNCTIONS
 
@@ -26,7 +27,7 @@ from main import P2p_getdata,get_istance
 
 
 # DEFINE A CLASS FOR THE WINDOW (IT HAS ANOTHER POP-UP WINDOWS)
-class App(tk.Tk):
+class GUI_cc(tk.Frame):
 
    
     # Convert RGB to HSV function
@@ -187,5 +188,23 @@ class App(tk.Tk):
         print('The color scales has been added to the scalar fields of the point cloud')  
         self.destroy()  # Close the window
         
-app = App()
-app.mainloop()
+    def show_frame(self,window):
+        self.main_frame(window)
+        self.grid(row=1, column=0, pady=10)
+
+    def hide_frame(self):
+        self.grid_forget()
+        
+#%% START THE GUI        
+if __name__ == "__main__":
+    try:        
+        window = tk.Tk()
+        app = GUI_cc()
+        app.main_frame(window)
+        window.mainloop()    
+    except Exception as e:
+        print("An error occurred during the computation of the algorithm:", e)
+        
+        # Optionally, print detailed traceback
+        traceback.print_exc()
+        window.destroy()

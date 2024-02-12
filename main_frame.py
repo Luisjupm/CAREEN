@@ -13,9 +13,9 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 from tkinter import messagebox
-from PyPDF2 import PdfReader
-# import fitz
-# from PIL import Image, ImageTk
+from tkPDFViewer import tkPDFViewer as pdf
+import webbrowser
+from PIL import Image, ImageTk
 
 #CloudCompare Python Plugin
 import cccorelib
@@ -28,150 +28,180 @@ path_parts = script_directory.split(os.path.sep)
 additional_modules_directory=os.path.sep.join(path_parts[:-1])+ '\main_module'
 sys.path.insert(0, additional_modules_directory)
 
-from main_gui import definition_of_labels_type_1
+from main_gui import definition_of_labels_type_1, definition_of_buttons_type_1
 
 #%% ADDING GUIS
 
+# Segmentation methods
 additional_modules_directory=os.path.sep.join(path_parts[:-1])+ '\segmentation_methods'
 sys.path.insert(0, additional_modules_directory)
 
 from supervised_machine_learning import GUI_mls
 from unsupervised_machine_learning import GUI_mlu
 from deep_learning_segmentation_v2 import GUI_dl
+from bim_integration_css import GUI_bicss
+from bim_integration_damage import GUI_bid
 
-# additional_modules_directory=os.path.sep.join(path_parts[:-1])+ '\geometric-based_methods'
-# sys.path.insert(0, additional_modules_directory)
+# Geometric based methods
+additional_modules_directory=os.path.sep.join(path_parts[:-1])+ '\geometric-based_methods'
+sys.path.insert(0, additional_modules_directory)
 
-# from supervised_geometric_based import GUI_gbs
-# from unsupervised_geometric_based import GUI_gbu
+from geometrical_features import GUI_gf
+from analysis_of_arches import GUI_arches
+from analysis_of_deflections import GUI_deflection
+# from analysis_of_inclinations import GUI_inclination
+# from analysis_of_vaults import GUI_vaults
 
-# additional_modules_directory=os.path.sep.join(path_parts[:-1])+ '\radiometric-based_methods'
-# sys.path.insert(0, additional_modules_directory)
+# Radiometric based methods
+additional_modules_directory_2=os.path.sep.join(path_parts[:-1])+ '\radiometric-based_methods'
+sys.path.insert(0, additional_modules_directory_2)
 
-# from radiometric_based import GUI_rb
+from color_conversion import GUI_cc
+# from stadistical_features import GUI_stadistical_features
 
-#%% ADDING PDF FILE
+# Other methods
+additional_modules_directory=os.path.sep.join(path_parts[:-1])+ '\other_methods'
+sys.path.insert(0, additional_modules_directory)
+
+# from anisotropic_denoising import GUI_ad
+from potree_converter_v2 import GUI_potree_converter
+# from voxelize import GUI_voxelize
+
+#%% ADDING assets
 current_directory= os.path.dirname(os.path.abspath(__file__))
-path_pdf_file= os.path.join(current_directory,"help.pdf")
+path_pdf_file= os.path.join(current_directory,'assets',r"help.pdf")
+path_license= os.path.join(current_directory,'assets',r"license.pdf")
+path_icon_ico= os.path.join(current_directory,'assets',r"logo.ico")
+path_icon_png= os.path.join(current_directory,'assets',r"logo_high_res.png")
+path_about_logo_1= os.path.join(current_directory,'assets',r"logo_1.png")
+path_about_logo_2= os.path.join(current_directory,'assets',r"logo_2.png")
+path_about_logo_3= os.path.join(current_directory,'assets',r"logo_3.png")
+path_about_logo_4= os.path.join(current_directory,'assets',r"logo_4.png")
 
+#%% ADDING contributors faces
+contributors_directory = (current_directory,'assets', 'contributors')
+extensions = ["jpg", "jpeg", "png"]
+# Inicializar la lista de imágenes de los contribuyentes
+contributor_images = [os.path.join(*contributors_directory, f"i{i}.{ext}") 
+                      for i in range(1, 18) 
+                      for ext in extensions 
+                      if os.path.exists(os.path.join(*contributors_directory, f"i{i}.{ext}"))]
+# contributor_images = [os.path.join(*contributors_directory, f"i{i}.{ext}") for i in range(1, 18) for ext in ["jpg" or "jpeg" or"png"]]
+# i1= os.path.join(*contributors_directory,"i1.jpg")
+# i2= os.path.join(*contributors_directory,"i2.jpeg")
+# i3= os.path.join(*contributors_directory,"i3.jpg")
+# i4= os.path.join(*contributors_directory,"i4.jpg")
+# i5= os.path.join(*contributors_directory,"i5.jpg")
+# i6= os.path.join(*contributors_directory,"i6.jpg")
+# i7= os.path.join(*contributors_directory,"i7.jpg")
+# i8= os.path.join(*contributors_directory,"i8.jpg")
+# i9= os.path.join(*contributors_directory,"i9.jpg")
+# i10= os.path.join(*contributors_directory,"i10.jpg")
+# i11= os.path.join(*contributors_directory,"i11.jpg")
+# i12= os.path.join(*contributors_directory,"i12.jpg")
+# i13= os.path.join(*contributors_directory,"i13.jpg")
+# i14= os.path.join(*contributors_directory,"i14.jpg")
+# i15= os.path.join(*contributors_directory,"i15.png")
+# i16= os.path.join(*contributors_directory,"i16.png")
+# i17= os.path.join(*contributors_directory,"i17.jpg")
 
 #%% GUI
 
 class main_GUI(tk.Frame):
     def __init__(self, master=None, **kwargs):
         super().__init__(master, **kwargs)
-        
-        # Initialize the frames as attributes of the GUI class
-        self.algo_mls_frame = GUI_mls(self, borderwidth=2, relief="groove", padx=10, pady=10)
-        self.algo_mlu_frame = GUI_mlu(self, borderwidth=2, relief="groove", padx=10, pady=10)
-        self.algo_dl_frame = GUI_dl(self, borderwidth=2, relief="groove", padx=10, pady=10)
-        
-        # self.algo_gbs_frame = GUI_gbs(self, borderwidth=2, relief="groove", padx=10, pady=10)
-        # self.algo_gbu_frame = GUI_gbu(self, borderwidth=2, relief="groove", padx=10, pady=10)
-        # self.algo_rb_frame = GUI_rb(self, borderwidth=2, relief="groove", padx=10, pady=10)
-        
-        self.algo_mls_frame.grid(row=3, rowspan=7, column=0, columnspan=3, pady=10, sticky="nsew")
-        self.algo_mlu_frame.grid(row=2, column=0, pady=10, sticky="nsew")
-        self.algo_dl_frame.grid(row=1, column=0, pady=10, sticky="nsew")
-        
-        # self.algo_gbs_frame.grid(row=3, column=0, pady=10, sticky="nsew")
-        # self.algo_gbu_frame.grid(row=3, column=0, pady=10, sticky="nsew")
-        # self.algo_rb_frame.grid(row=3, column=0, pady=10, sticky="nsew")
-       
-        # At the beginning, hide the frames of the algorithms
-        self.algo_mls_frame.grid_forget()
-        self.algo_mlu_frame.grid_forget()
-        self.algo_dl_frame.grid_forget()
-        
-        # self.algo_gbs_frame.grid_forget()
-        # self.algo_gbu_frame.grid_forget()
-        # self.algo_rb_frame.grid_forget()
-        
-        # Agregar self.text y self.scrollbar como atributos
-        self.text = tk.Text(self, wrap="none", height=20, width=60)
-        self.text.grid(row=1, column=2, sticky="nsew")
-
-        self.scrollbar = tk.Scrollbar(self, orient="vertical", command=self.text.yview)
-        self.scrollbar.grid(row=1, column=3, sticky="ns")
-        
-        
-    def hide_frames(self):
-        # Hide all algorithm frames
-        self.algo_mls_frame.grid_forget()
-        self.algo_mlu_frame.grid_forget()
-        self.algo_dl_frame.grid_forget()
-        # self.algo_gbs_frame.grid_forget()
-        # self.algo_gbu_frame.grid_forget()
-        # self.algo_rb_frame.grid_forget()
-
-    def toggle_mls(self, root_gui):
-        # Show or hide widgets related to Supervised Machine Learning 
-        self.hide_frames()
-        # self.algo_mls_frame.show_frame(root_gui)
-        self.algo_mls_frame.show_frame(root_gui)
-        # self.algo_mls_frame.grid(row=3, column=0, pady=10, sticky="nsew")
-        # self.algo_mls_frame.pack(side="left", fill="both", expand=True)
     
-    def toggle_mlu(self, root_gui):
-        # Show or hide widgets related to Unsupervised Machine Learning
-        self.hide_frames()
-        self.algo_mlu_frame.show_frame(root_gui)
-
-    def toggle_dl(self, root_gui):
-        # Show or hide widgets related to Deep Learning
-        self.hide_frames()
-        self.algo_dl_frame.show_frame(root_gui)
-
-    def toggle_gbs(self, root_gui):
-        # Show or hide widgets related to Supervised Geometric Based methods
-        self.hide_frames()
-        self.algo_gbs_frame.show_frame(root_gui)
+    def toggle_window(self, window_name, window_class):
+        window_attr = f'{window_name}_window'
+        app_attr = f'{window_name}_app'
         
-    def toggle_gbu(self, root_gui):
-        # Show or hide widgets related to Unsupervised Geometric Based methods
-        self.hide_frames()
-        self.algo_gbu_frame.show_frame(root_gui)
+        if not hasattr(self, window_attr) or not getattr(self, window_attr).winfo_exists():
+            setattr(self, window_attr, tk.Toplevel(self.master))
+            setattr(self, app_attr, window_class(getattr(self, window_attr)))
+            getattr(self, app_attr).main_frame(getattr(self, window_attr))
+        else:
+            getattr(self, window_attr).destroy()
 
-    def toggle_rb(self, root_gui):
-        # Show or hide widgets related to Radiometric Based methods
-        self.hide_frames()
-        self.algo_rb_frame.show_frame(root_gui)
+    def toggle_mls(self,root_gui):
+        self.toggle_window('mls', GUI_mls)
+
+    def toggle_mlu(self,root_gui):
+        self.toggle_window('mlu', GUI_mlu)
+
+    def toggle_dl(self,root_gui):
+        self.toggle_window('dl', GUI_dl)
+
+    def toggle_gf(self,root_gui):
+        self.toggle_window('gf', GUI_gf)
+
+    def toggle_sf(self,root_gui):
+        print("This algorithm still doesn't working")
+        # self.toggle_window('sf', GUI_sf)
+
+    def toggle_arches(self,root_gui):
+        self.toggle_window('arches', GUI_arches)
+
+    def toggle_deflection(self,root_gui):
+        self.toggle_window('deflection', GUI_deflection)
+
+    def toggle_inclination(self,root_gui):
+        print("This algorithm still doesn't working")
+        # self.toggle_window('inclination', GUI_inclination)
+
+    def toggle_vaults(self,root_gui):
+        print("This algorithm still doesn't working")
+        # self.toggle_window('vaults', GUI_vaults)
+
+    def toggle_cc(self,root_gui):
+        self.toggle_window('cc', GUI_cc)
+
+    def toggle_bicss(self,root_gui):
+        self.toggle_window('bicss', GUI_bicss)
+
+    def toggle_bid(self,root_gui):
+        self.toggle_window('bid', GUI_bid)
+
+    def toggle_anisotropic(self,root_gui):
+        print("This algorithm still doesn't working")
+        # self.toggle_window('anisotropic', GUI_anisotropic)
+
+    def toggle_voxelize(self,root_gui):
+        print("This algorithm still doesn't working")
+        # self.toggle_window('voxelize', GUI_voxelize)
+
+    def toggle_pc(self,root_gui):
+        self.toggle_window('pc', GUI_potree_converter)
     
-    def on_scroll(self, *args):
-        # Actualizar la posición de la barra de desplazamiento en función de la posición de la barra de desplazamiento
-        self.text.yview(*args)
+    def open_pdf(self, event):
+        # Abrir el PDF en el lector de PDF predeterminado
+        webbrowser.open(path_pdf_file, new=2)
         
-    def open_pdf(self):
-        try:
-            # Intentar abrir el archivo PDF en la ruta predeterminada
-            pdf_path = path_pdf_file
-            pdf = PdfReader(pdf_path)
+    def open_license(self, event):
+        # Abrir el PDF en el lector de PDF predeterminado
+        webbrowser.open(path_license, new=2)
+    
+    def load_and_display_image(self, path, width, height, parent_widget, column, row, columnspan=1, rowspan=1, sticky="nsew", pady= 1, padx= 1,):
+        # Load image using PIL
+        image_pil = Image.open(path)
 
-            # Mostrar cada página del PDF en el widget de texto
-            for page_num in range(len(pdf.pages)):
-                text_content = pdf.pages[page_num].extract_text()
-                self.text.insert(tk.END, text_content)
+        # Resize image to desired dimensions
+        image_pil_resized = image_pil.resize((width, height))
 
-            # Configurar la barra de desplazamiento
-            self.text.config(yscrollcommand=self.scrollbar.set)
-            self.scrollbar.config(command=self.on_scroll)
+        # Convert image to PhotoImage
+        image_tk = ImageTk.PhotoImage(image_pil_resized)
 
-        except FileNotFoundError:
-            # Si el archivo no se encuentra, mostrar un mensaje de error
-            messagebox.showerror("Error", f"No se pudo encontrar el archivo PDF en la ruta predeterminada.")
-        except Exception as e:
-            # Para cualquier otro error, mostrar un mensaje de error
-            messagebox.showerror("Error", f"No se pudo abrir el archivo PDF: {e}")
-                
+        # Create a label to display the image
+        image_label = tk.Label(parent_widget, image=image_tk)
+        image_label.image = image_tk  # Guarda una referencia para evitar que la imagen sea recolectada por el recolector de basura
+        image_label.grid(row=row, column=column, columnspan=columnspan, rowspan=rowspan, pady= pady, padx= padx, sticky=sticky)
                 
     def main_frame_gui(self, root_gui):
                 
-        # GENERAL CONFIGURATION OF THE GUI
-        
-        # Configuration of the window        
-        root_gui.title("SEG 2 DIAGNOSE")
+        # # GENERAL CONFIGURATION OF THE GUI
+        # Configuration of the window
+        root_gui.title("SEG4D: Segmentation for CH Diagnosis v.1.0")
+        root_gui.iconbitmap(path_icon_ico)
         root_gui.resizable(False, False)     
-        root_gui.attributes('-toolwindow', -1)  # Remove minimize and maximize button 
         
         # Configuration of the tabs
         tab_control = ttk.Notebook(root_gui)
@@ -193,119 +223,273 @@ class main_GUI(tk.Frame):
         
         # TAB1 = CONSTRUCTION SYSTEMS SEGMENTATION
         
-        # Labels
-        label_texts = [
-            "Machine Learning",
-            "Deep Learning"
+        frames_and_buttons = [
+            ("Machine Learning", [("Supervised", self.toggle_mls), ("Unsupervised", self.toggle_mlu)]),
+            ("Deep Learning", [("Point Transformer", self.toggle_dl)]),
+            ("Features Computation", [("Geometrical features", self.toggle_gf), ("Stadistical features", self.toggle_sf)]),
+            ("Color Conversion", [("Open", self.toggle_cc)]),
+            ("Synthetic point clouds", [("Timber slabs", self.toggle_deflection), ("Mansory vaults", self.toggle_vaults)]),
+            ("BIM Integration", [("Open", self.toggle_bicss)])
         ]
-        row_positions = [0,1]        
-        definition_of_labels_type_1 ("t1",label_texts,row_positions,tab1,0)
-        
-        label_texts = [
-            "For more information:"
-        ]
-        row_positions = [0]        
-        definition_of_labels_type_1 ("t1",label_texts,row_positions,tab1,4)
 
-        
-        # Buttons
-        button_mls = ttk.Button(tab1, text="Supervised", command=lambda: self.toggle_mls(root_gui))
-        button_mlu = ttk.Button(tab1, text="Unsupervised", command=lambda: self.toggle_mlu(root_gui))
-        button_dl = ttk.Button(tab1, text="Deep Learning", command=lambda: self.toggle_dl(root_gui))
-        button_mls.grid(row=0, column=1, padx=10, pady=10, sticky="w")
-        button_mlu.grid(row=0, column=2, padx=10, sticky="w")
-        button_dl.grid(row=1, column=1, padx=10, sticky="w")
+        for row, (frame_text, buttons) in enumerate(frames_and_buttons, start=1):
+            frame = tk.LabelFrame(tab1, text=frame_text, padx=5, pady=4)
+            frame.grid(row=row, column=0, sticky="nsew", columnspan=2, padx=5, pady=4)
+            for col, (button_text, command) in enumerate(buttons):
+                button = ttk.Button(frame, text=button_text, command=lambda cmd=command: cmd(root_gui))
+                button.grid(row=row, column=col, sticky="nsew", pady=4, padx=5)
+
+        # Label with hyperlink
+        label_text = "For more information: open the guide in your default PDF visualizer"
+        label = tk.Label(tab1, text=label_text, fg="blue", cursor="hand2")
+        label.grid(row=11, column=4, sticky="w", pady=1, padx=1)
+        label.bind("<Button-1>", lambda event: self.open_pdf(event))
+
         
         # Create a vertical line (separator) in the middle of the window
         separator = ttk.Separator(tab1, orient="vertical")
-        separator.grid(row=0, column=3, rowspan=5, sticky="ns", padx=5)
+        separator.grid(row=0, column=3, rowspan=4, sticky="ns", padx=15, pady=10)
         
-        # # Create a PDF visualizer in the right side of the window
-        # text_frame = tk.Frame(tab1, padx=5, pady=5)
-        # self.text = tk.Text(text_frame, wrap="word", height=20, width=60)
-        # scrollbar = ttk.Scrollbar(text_frame, command=self.text.yview)
-        # self.text.config(yscrollcommand=scrollbar.set)
-        # self.text.grid(row=1, column=2, sticky="nsew")
-        # scrollbar.grid(row=1, column=3, sticky="ns")
-        # text_frame.grid(row=1, column=4, rowspan=10, padx=5, sticky="nsew")
-        
-        # Create a text viewer in the right side of the window
-        self.text = tk.Text(tab1, wrap="none", height=20, width=60)
-        self.text.grid(row=1, column=4, rowspan=10, padx=5, sticky="nsew")
-
-        # Crear una barra de desplazamiento vertical
-        self.scrollbar = tk.Scrollbar(tab1, orient="vertical", command=self.text.yview)
-        self.scrollbar.grid(row=1, column=5, rowspan=10, sticky="ns")
-        
-        self.open_pdf()
-        
-        # # Crear el botón para abrir un PDF
-        # button_open_pdf = ttk.Button(tab1, text="Abrir PDF", command = self.open_pdf(root_gui))
-        # button_open_pdf.grid(row=1, column=0, padx=5, pady=5, sticky="w")
-        
-        # Configurar el redimensionamiento de las columnas y filas del Frame principal
-        # root_gui.columnconfigure(2, weight=1)
-        # root_gui.rowconfigure(0, weight=1)
+        #PDF visulaizer in tkinter
+        v2=None
+        # creating object of ShowPdf from tkPDFViewer.
+        v1 = pdf.ShowPdf()
+        ### clear the image list ###
+        v1.img_object_li.clear()
+        # Adding pdf location and width and height.
+        v2 = v1.pdf_view(tab1,
+                         pdf_location = path_pdf_file, 
+                         width = 55, height = 25)
+        v2.grid(row=0, column=4, rowspan=10, padx=5,pady=5, sticky="nsew")
         
         
         # TAB2 = DAMAGE EVALUATION
         
-        # Labels
-        label_texts = [
-            "Machine Learning",
-            "Deep Learning"
-            "Features Computation",
-            "Arches and Vaults",
-            "Slabs",
-            "Pilars and Buttresses"
-            "BIM integration"
+        frames_and_buttons = [
+            ("Machine Learning", [("Supervised", self.toggle_mls), ("Unsupervised", self.toggle_mlu)]),
+            ("Deep Learning", [("Point Transformer", self.toggle_dl)]),
+            ("Features Computation", [("Geometrical features", self.toggle_gf), ("Stadistical features", self.toggle_sf)]),
+            ("Color Conversion", [("Open", self.toggle_cc)]),
+            ("Arches and Vaults", [("Analysis of arches", self.toggle_arches), ("Analysis of vaults", self.toggle_vaults)]),
+            ("Slabs", [("Analysis of deflection", self.toggle_deflection)]),
+            ("Pilars and Buttresses", [("Analysis of inclination", self.toggle_inclination)]),
+            ("BIM Integration", [("Open", self.toggle_bid)])
         ]
-        row_positions = [0,1,2,3,4,5,6]        
-        definition_of_labels_type_1 ("t2",label_texts,row_positions,tab2,0)
+
+        for row, (frame_text, buttons) in enumerate(frames_and_buttons, start=1):
+            frame = tk.LabelFrame(tab2, text=frame_text, padx=5, pady=2)
+            frame.grid(row=row, column=0, sticky="nsew", columnspan=2, padx=5, pady=2)
+            for col, (button_text, command) in enumerate(buttons):
+                button = ttk.Button(frame, text=button_text, command=lambda cmd=command: cmd(root_gui))
+                button.grid(row=row, column=col, sticky="nsew", pady=2, padx=5)
         
-        # Crear botones como flechas para mostrar/ocultar el contenido
-        button_gbs = ttk.Button(tab2, text="Supervised", command=lambda: self.toggle_gbs(root_gui))
-        button_gbu = ttk.Button(tab2, text="Unsupervised", command=lambda: self.toggle_gbu(root_gui))
-        button_rb = ttk.Button(tab2, text="Radiometric based", command=lambda: self.toggle_rb(root_gui))
-        button_gbs.grid(row=0, column=1, padx=5, sticky="w")
-        button_gbu.grid(row=0, column=2, padx=5, sticky="w")
-        button_rb.grid(row=1, column=1, padx=5, sticky="w")
-        
-        
+        # Label with hyperlink
+        label_text = "For more information: open the guide in your default PDF visualizer"
+        label = tk.Label(tab2, text=label_text, fg="blue", cursor="hand2")
+        label.grid(row=11, column=4, sticky="w", pady=10)
+        label.bind("<Button-1>", lambda event: self.open_pdf(event))
+   
         # Create a vertical line (separator) in the middle of the window
         separator = ttk.Separator(tab2, orient="vertical")
-        separator.grid(row=0, column=3, rowspan=5, sticky="ns", padx=5)
+        separator.grid(row=0, column=3, rowspan=5, sticky="ns", padx=15 , pady=10)
         
-        self.text = tk.Text(tab2, wrap="none", height=20, width=60)
-        self.text.grid(row=1, column=4, rowspan=10, padx=5, sticky="nsew")
-
-        # Crear una barra de desplazamiento vertical
-        self.scrollbar = tk.Scrollbar(tab2, orient="vertical", command=self.text.yview)
-        self.scrollbar.grid(row=1, column=5, rowspan=10, sticky="ns")
-        
-        self.open_pdf()
+        #PDF visulaizer in tkinter
+        v2=None
+        # creating object of ShowPdf from tkPDFViewer.
+        v1 = pdf.ShowPdf()
+        ### clear the image list ###
+        v1.img_object_li.clear()
+        # Adding pdf location and width and height.
+        v2 = v1.pdf_view(tab2,
+                         pdf_location = path_pdf_file, 
+                         width = 55, height = 25)
+        v2.grid(row=0, column=4, rowspan=10, padx=5, sticky="nsew")
         
         
         
         # TAB3 = OTHER
         
-        # Labels
-        label_texts = [
-            "Noise Reduction",
-            "Point Cloud Voxelization",
-            "Potree Converter"
+        frames_and_buttons = [
+            ("Noise Reduction", [("Open", self.toggle_anisotropic)]),
+            ("Point Cloud Voxelization", [("Open", self.toggle_voxelize)]),
+            ("Potree Converter", [("Open", self.toggle_pc)])
         ]
-        row_positions = [0,1,2]        
-        definition_of_labels_type_1 ("t3",label_texts,row_positions,tab3,0)
+
+        for row, (frame_text, buttons) in enumerate(frames_and_buttons, start=1):
+            frame = tk.LabelFrame(tab3, text=frame_text, padx=5, pady=5)
+            frame.grid(row=row, column=0, sticky="nsew", columnspan=2, padx=5, pady=5)
+            for col, (button_text, command) in enumerate(buttons):
+                button = ttk.Button(frame, text=button_text, command=lambda cmd=command: cmd(root_gui))
+                button.grid(row=row, column=col, sticky="nsew", pady=2, padx=5)
         
-        button_nr = ttk.Button(tab2, text="Noise Reduction", command=lambda: self.toggle_nr(root_gui))
-        button_pcv = ttk.Button(tab2, text="Point Cloud Voxelization", command=lambda: self.toggle_pcv(root_gui))
-        button_pc = ttk.Button(tab2, text="Potree Converter", command=lambda: self.toggle_pc(root_gui))
-        button_nr.grid(row=0, column=1, padx=5, sticky="w")
-        button_pcv.grid(row=1, column=1, padx=5, sticky="w")
-        button_pc.grid(row=2, column=1, padx=5, sticky="w")
+        # Label with hyperlink
+        label_text = "For more information: open the guide in your default PDF visualizer"
+        label = tk.Label(tab3, text=label_text, fg="blue", cursor="hand2")
+        label.grid(row=41, column=4, sticky="w", pady=10)
+        label.bind("<Button-1>", lambda event: self.open_pdf(event))
+        
+        # Create a vertical line (separator) in the middle of the window
+        separator = ttk.Separator(tab3, orient="vertical")
+        separator.grid(row=0, column=2, rowspan=5, sticky="ns", padx=85 , pady=10)
+        
+        #PDF visulaizer in tkinter
+        v2=None
+        # creating object of ShowPdf from tkPDFViewer.
+        v1 = pdf.ShowPdf()
+        ### clear the image list ###
+        v1.img_object_li.clear()
+        # Adding pdf location and width and height.
+        v2 = v1.pdf_view(tab3,
+                         pdf_location = path_pdf_file, 
+                         width = 55, height = 25)
+        v2.grid(row=0, column=4, rowspan=40, padx=5, sticky="nsew")
+
+        
 
         # TAB4 = ABOUT
+        
+        # Creamos un frame dentro de tab4 para colocar el Canvas
+        canvas_frame = tk.Frame(tab4)
+        canvas_frame.grid(row=0, column=0, sticky="nsew")
+
+        # Creamos un Canvas dentro del frame
+        canvas = tk.Canvas(canvas_frame)
+        canvas.grid(row=0, column=0, sticky="nsew")
+
+        # Creamos un frame dentro del Canvas para colocar los widgets
+        inner_frame = tk.Frame(canvas)
+        canvas.create_window((0, 0), window=inner_frame, anchor=tk.NW)
+        
+        # Add logos
+        self.load_and_display_image(path_icon_png, 80, 80, inner_frame, column=0, row=0, rowspan=2,columnspan=2,sticky="nsew")
+        self.load_and_display_image(path_about_logo_1, 270, 140, inner_frame, column=0, row=4, columnspan=3, rowspan=4, sticky="w", padx=5)
+        self.load_and_display_image(path_about_logo_2, 100, 80, inner_frame, column=4, row=0,rowspan=2,sticky="e")
+        self.load_and_display_image(path_about_logo_3, 80, 80, inner_frame, column=5, row=0, rowspan=2,sticky="e")
+        self.load_and_display_image(path_about_logo_4, 100, 80, inner_frame, column=6, row=0, rowspan=2,sticky="e")
+        
+
+        label_title = tk.Label(inner_frame, text="SEG4D", font=("Helvetica", 16, "bold"), padx=5, pady=5)
+        label_title.grid(row=0, column=2, sticky="w", padx=1, pady=0)
+        
+        label_title = tk.Label(inner_frame, text="Segmentation for Cultural Heritage Diagnosis", font=("Helvetica", 10, "bold"), padx=5, pady=5)
+        label_title.grid(row=1, column=2, columnspan=3, sticky="w", padx=0, pady=1)
+        
+        label_copyright= tk.Label(inner_frame, text="Copyright © 2024 Luis Javier Sánchez, Pablo Sanz & Rubén Santamaría", font=("Helvetica", 10, "bold"), padx=5)
+        label_copyright.grid(row=2, column=0, columnspan=5, sticky="w", padx=1, pady=1)
+        
+        # Label with information about the software and the authors
+        label_text = ("This software has been funded by the Comunidad de Madrid through the call Research Grants for Young Investigators from Universidad\n"
+                        "Politécnica de Madrid. It has been developed by the AIPA research team."
+                      )
+        
+        label_about = tk.Label(inner_frame, text=label_text, justify="left", padx=5, pady=5)
+        label_about.grid(row=3, column=0, columnspan=7, sticky="w", padx=1, pady=1)
+        
+        label_text = ("For help using the software, consult the user guide.\n"
+                        "For technical support, contact us at:\n"
+                        "lj.sanchez@upm.es\n"
+                        "p.sanzh@upm.es\n"
+                        "ruben.santamaria.maestro@alumnos.upm.es\n\n"
+                        "Version: 1.0")
+        
+        label_about = tk.Label(inner_frame, text=label_text, justify="right", padx=5, pady=5)
+        label_about.grid(row=4, column=4, columnspan=3,rowspan=4, sticky="e", padx=5, pady=5)
+        
+        # Create a vertical line (separator) in the middle of the window
+        # separator = ttk.Separator(inner_frame, orient="vertical")
+        # separator.grid(row=4, column=3, rowspan=4, sticky="ns", padx=0 , pady=10)
+
+        # Label with hyperlink
+        label_text = "See LICENSE"
+        label = tk.Label(inner_frame, text=label_text, fg="blue", cursor="hand2")
+        label.grid(row=4, column=3, sticky="w", pady=2)
+        label.bind("<Button-1>", lambda event: self.open_license(event))
+        
+        # Label with hyperlink
+        label_text = "Open the user guide"
+        label = tk.Label(inner_frame, text=label_text, fg="blue", cursor="hand2")
+        label.grid(row=5, column=3, sticky="w", pady=2)
+        label.bind("<Button-1>", lambda event: self.open_pdf(event))
+        
+        # Label with hyperlink
+        label_text = "Visit our website"
+        label = tk.Label(inner_frame, text=label_text, fg="blue", cursor="hand2")
+        label.grid(row=6, column=3, sticky="w", pady=2)
+        label.bind("<Button-1>", lambda event: webbrowser.open("https://www.dcta.upm.es/regional-careen/", new=2))
+        
+        # Label with hyperlink
+        label_text = "Contact technical support"
+        label = tk.Label(inner_frame, text=label_text, fg="blue", cursor="hand2")
+        label.grid(row=7, column=3, sticky="w", pady=2)
+        label.bind("<Button-1>", lambda event: webbrowser.open("lj.sanchez@upm.es", new=2))
+        
+        # Create a list of label texts
+        label_texts = [
+            "Luis Javier Sánchez Aparicio (lj.sanchez@upm.es). PhD in Geoinformatics. Universidad Politécnica de Madrid. Department\n"
+            "of Construction and Architectural Technologies. ORCID: 0000-0001-6758-2234.",
+            "Pablo Sanz Honrado (p.sanzh@upm.es). Pre-doctoral fellow. Universidad Politécnica de Madrid. Department of\n"
+            "Construction and Architectural Technologies. ORCID: 0000-0002-8090-1794.",
+            "Rubén Santamaría Maestro (ruben.santamaria.maestro@alumnos.upm.es). Pre-doctoral fellow. Universidad Politécnica de\n"
+            "Madrid. Department of Construction and Architectural Technologies. ORCID: 0009-0001-0141-2002.",
+            "Paula Villanueva Llauradó (paula.villanueva@upm.es). PhD in Structural Engineering. Universidad Politécnica de Madrid.\n"
+            "Department of Structures. ORCID: 0009-0001-0141-2002.",
+            "Jose Ramón Aira Zunzunegui (joseramon.aira@upm.es). PhD in Mechanics of Materials. Universidad Politécnica de Madrid.\n"
+            "Department of Construction and Architectural Technologies. ORCID: 0000-0002-4598-5259.",
+            "Jesús María García Gago (joseramon.aira@upm.es). PhD in Cartographic and Terrain Engineering. University of Salamanca.\n"
+            "Department of Construction and Agronomy. ORCID: 0000-0001-9100-7600.",
+            "Federico Luis del Blanco García (federicoluis.delblanco@upm.es). PhD in Architecture. Universidad Politécnica de Madrid.\n"
+            "Department of Construction and Architectural Technologies. ORCID: 0000-0002-7907-6643.",
+            "David Sanz Aráuz (david.sanz.arauz@upm.es). PhD in Architecture. Universidad Politécnica de Madrid.\n"
+            "Department of Construction and Architectural Technologies. ORCID: 0000-0003-4793-169X.",
+            "Roberto Pierdicca (r.pierdicca@univpm.it). PhD in Information Engineering. Università Politecnica delle Marche.\n"
+            "Department of Civil Building Engineering and Architecture. ORCID: 0000-0002-9160-834X.",
+            "Soledad García Morales (soledad.garcia@upm.es). PhD in Architecture. Universidad Politécnica de Madrid.\n"
+            "Department of Construction and Architectural Technologies. ORCID: 0000-0003-1106-1063.",
+            "Miguel Ángel Maté González (soledad.garcia@upm.es). PhD in Geotechnologies Applied to Construction, Energy and\n"
+            "Industry. University of Salamanca. Department of Cartographic and Terrain Engineering. ORCID: 0000-0001-5721-346X.",
+            "Javier Pinilla Meló (javier.pinilla@upm.es). PhD in Architecture. Universidad Politécnica de Madrid.\n"
+            "Department of Construction and Architectural Technologies. ORCID: 0000-0002-9390-2083.",
+            "Esther Moreno Fernández (esther.moreno@upm.es). PhD in Materials Engineering and Chemical Engineering. Universidad\n"
+            "Politécnica de Madrid. Department of Construction and Architectural Technologies. ORCID: 0000-0001-6625-7093.",
+            "Cristina Mayo Corrochano (esther.moreno@upm.es). PhD in Architecture. ESTUDIO MAYO. Madrid\n",
+            "Beatriz del Río Calleja (b.delrio@alumnos.upm.es). PhD in Architecture. Universidad Politécnica de Madrid.\n"
+            "Department of Construction and Architectural Technologies. ORCID: 0000-0002-9998-8789.",
+            "David Mencías Carrizosa (d.mencias@upm.es). PhD in Architecture. Universidad Politécnica de Madrid.\n"
+            "Department of Structures.",
+            "Milagros Palma Crespo (m.palma@upm.es). PhD in Architecture. Universidad Politécnica de Madrid.\n"
+            "Department of Construction and Architectural Technologies. ORCID: 0000-0002-6982-2374."
+        ]
+        
+        # Load images and display them dynamically
+        for i, (image_path, label_text) in enumerate(zip(contributor_images, label_texts), start=8):
+            self.load_and_display_image(image_path, 60, 60, inner_frame, column=0, row=i, sticky="w", padx=10)
+            label_about = tk.Label(inner_frame, text=label_text, justify="left", padx=5, pady=5)
+            label_about.grid(row=i, column=1, columnspan=6, sticky="nw", padx=1, pady=1)
+        
+        
+        # Configuramos el Canvas para que se expanda con el cambio de tamaño
+        inner_frame.bind("<Configure>", lambda event: canvas.configure(scrollregion=canvas.bbox("all")))
+
+        # Agregamos la barra de desplazamiento
+        scrollbar = tk.Scrollbar(canvas_frame, orient=tk.VERTICAL, command=canvas.yview)
+        scrollbar.grid(row=0, column=1, sticky="ns")
+        canvas.config(yscrollcommand=scrollbar.set)
+        
+        def scroll_wheel(event):
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        
+        # Asignar el evento a la función scroll_wheel
+        canvas.bind_all("<MouseWheel>", scroll_wheel)
+        
+        # Configuramos el comportamiento del Canvas con respecto al tamaño de la ventana
+        canvas.grid_rowconfigure(0, weight=1)
+        canvas.grid_columnconfigure(0, weight=1)
+        
+        # Configuramos la expansión de inner_frame
+        tab4.grid_rowconfigure(0, weight=1)
+        tab4.grid_columnconfigure(0, weight=1)
+        canvas_frame.grid_rowconfigure(0, weight=1)
+        canvas_frame.grid_columnconfigure(0, weight=1)
         
 try:
     # START THE MAIN WINDOW        
@@ -319,154 +503,3 @@ except Exception as e:
     traceback.print_exc()
     root_gui.destroy()
 
-
-
-
-
-
-
-# def toggle_ml(root_gui):
-#     # Mostrar u ocultar widgets relacionados con Machine Learning
-#     if algo_ml_frame.winfo_ismapped(root_gui):
-#         algo_ml_frame.hide_frame(root_gui)
-#     else:
-#         algo_ml_frame.show_frame(root_gui)
-#         algo_dl_frame.hide_frame(root_gui)
-
-# def toggle_dl(root_gui):
-#     # Mostrar u ocultar widgets relacionados con Deep Learning
-#     if algo_dl_frame.winfo_ismapped(root_gui):
-#         algo_dl_frame.hide_frame(root_gui)
-#     else:
-#         algo_dl_frame.show_frame(root_gui)
-#         algo_ml_frame.hide_frame(root_gui)
-
-# # Crear la ventana principal
-# root_gui = tk.Tk()
-# root_gui.title("Selección de Algoritmo")
-
-# # Crear el Frame principal
-# frame_main = tk.Frame(root_gui)
-# frame_main.grid(padx=10, pady=10)
-
-# # Crear botones como flechas para mostrar/ocultar el contenido
-# button_ml = ttk.Button(frame_main, text="↓ Machine Learning", command=toggle_ml)
-# button_dl = ttk.Button(frame_main, text="↓ Deep Learning", command=toggle_dl)
-
-# # Colocar los botones en la parte izquierda de la ventana
-# button_ml.grid(row=0, column=0, padx=5, sticky="w")
-# button_dl.grid(row=0, column=0, padx=5, sticky="w")
-
-# # Crear una línea vertical (Separator) en la mitad de la ventana
-# separator = ttk.Separator(frame_main, orient="vertical")
-# separator.grid(row=0, column=1, rowspan=2, sticky="ns", padx=5)
-
-# # Crear el Frame para los algoritmos de Machine Learning
-# algo_ml_frame = GUI2(frame_main, borderwidth=2, relief="groove", padx=10, pady=10)
-
-# # Crear el Frame para los algoritmos de Deep Learning
-# algo_dl_frame = GUI2(frame_main, borderwidth=2, relief="groove", padx=10, pady=10)
-
-# # Crear un visor de PDF en la parte derecha de la ventana
-# text_frame = tk.Frame(frame_main, padx=10, pady=10)
-# text = tk.Text(text_frame, wrap="word", height=20, width=60)
-# scrollbar = ttk.Scrollbar(text_frame, command=text.yview)
-# text.config(yscrollcommand=scrollbar.set)
-# text.grid(row=0, column=0, sticky="nsew")
-# scrollbar.grid(row=0, column=1, sticky="ns")
-# text_frame.grid(row=0, column=2, rowspan=2, padx=5, sticky="nsew")
-
-# # Crear el botón para abrir un PDF
-# # button_open_pdf = ttk.Button(frame_main, text="Abrir PDF", command=open_pdf)
-# # button_open_pdf.grid(row=1, column=0, padx=5, pady=5, sticky="w")
-
-# # Configurar el redimensionamiento de las columnas y filas del Frame principal
-# frame_main.columnconfigure(2, weight=1)
-# frame_main.rowconfigure(0, weight=1)
-
-# # Iniciar el bucle principal
-# root_gui.mainloop()
-
-
-
-
-# class MainFrame(tk.Frame):
-#     def __init__(self, master=None, **kwargs):
-#         super().__init__(master, **kwargs)
-
-#         # Crear botones como flechas para mostrar/ocultar el contenido
-#         self.button_ml = ttk.Button(self, text="↓ Machine Learning", command=self.toggle_ml)
-#         self.button_dl = ttk.Button(self, text="↓ Deep Learning", command=self.toggle_dl)
-
-#         # Crear el Frame para los algoritmos de Machine Learning
-#         self.algo_ml_frame = GUI2(self, borderwidth=2, relief="groove", padx=10, pady=10)
-#         self.algo_ml_frame.grid(row=1, column=0, pady=10, sticky="nsew")
-
-#         # Crear el Frame para los algoritmos de Deep Learning
-#         self.algo_dl_frame = GUI2(self, borderwidth=2, relief="groove", padx=10, pady=10)
-#         self.algo_dl_frame.grid(row=1, column=0, pady=10, sticky="nsew")
-
-#         # Configurar el redimensionamiento de las columnas y filas
-#         self.columnconfigure(0, weight=1)
-#         self.rowconfigure(1, weight=1)
-
-#         # Inicialmente, ocultar los frames de algoritmos
-#         self.algo_ml_frame.grid_forget()
-#         self.algo_dl_frame.grid_forget()
-        
-#     def toggle_ml(self):
-#         # Mostrar u ocultar widgets relacionados con Machine Learning
-#         self.algo_ml_frame.grid(row=1, column=0, pady=10, sticky="nsew")
-#         self.algo_dl_frame.pack_forget()
-
-#     def toggle_dl(self):
-#         # Mostrar u ocultar widgets relacionados con Deep Learning
-#         self.algo_dl_frame.grid(row=1, column=0, pady=10, sticky="nsew")
-#         self.algo_ml_frame.pack_forget()
-        
-# # def open_pdf():
-# #     # Abrir un archivo PDF y cargarlo en el visor
-# #     pdf_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")])
-# #     if pdf_path:
-# #         try:
-# #             pdf = PdfReader(pdf_path)
-# #             text.delete(1.0, tk.END)
-# #             for page_num in range(len(pdf.pages)):
-# #                 text.insert(tk.END, pdf.pages[page_num].extract_text())
-# #         except Exception as e:
-# #             messagebox.showerror("Error", f"No se pudo abrir el archivo PDF: {e}")
-
-
-# def main():
-#     # Crear la ventana principal
-#     root_gui = tk.Tk()
-#     root_gui.title("Selección de Algoritmo")
-
-#     # Crear el Frame principal
-#     frame_main = MainFrame(root_gui)
-#     frame_main.grid(padx=10, pady=10, sticky="nsew")
-    
-#     # Crear un visor de PDF en la parte derecha de la ventana
-#     text_frame = tk.Frame(frame_main, padx=10, pady=10)
-#     text = tk.Text(text_frame, wrap="word", height=20, width=60)
-#     scrollbar = ttk.Scrollbar(text_frame, command=text.yview)
-#     text.config(yscrollcommand=scrollbar.set)
-#     text.grid(row=0, column=0, sticky="nsew")
-#     scrollbar.grid(row=0, column=1, sticky="ns")
-#     text_frame.grid(row=0, column=2, rowspan=2, padx=5, sticky="nsew")
-    
-#     # # Crear el botón para abrir un PDF
-#     # button_open_pdf = ttk.Button(frame_main, text="Abrir PDF", command=open_pdf)
-#     # button_open_pdf.grid(row=1, column=0, padx=5, pady=5, sticky="w")
-
-#     # Configurar el redimensionamiento de las columnas y filas del Frame principal
-#     frame_main.columnconfigure(0, weight=1)
-#     frame_main.columnconfigure(2, weight=1)
-#     frame_main.rowconfigure(0, weight=1)
-
-#     # Iniciar el bucle principal
-#     root_gui.mainloop()
-
-
-# if __name__ == "__main__":
-#     main()

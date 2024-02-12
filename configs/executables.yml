@@ -16,5 +16,14 @@ DBSCAN: 'scikit-learn-1.3.2/scikit-learn-1.3.2.exe'
 OPTICS: 'scikit-learn-1.3.2/scikit-learn-1.3.2.exe'
 
 # DEEP LEARNING APP
-POINT_TRANSFORMER: 'point-transformer/mvc.exe'    
+POINT_TRANSFORMER: 'point-transformer/mvc.exe' 
+
+# GEOMETRIC BASED METHODS
+JAKTERISTICS: 'jakteristics-0.6.0/jakteristics-0.6.0.exe'  
+
+# OTHER METHODS
+ANISOTROPIC_DENOISING: 'Anisotropic_denoising-1.0.4/Anisotropic_denoising-1.0.4.exe'
+POTREE_CONVERTER: 'potree-2.1.1/PotreeConverter.exe'
+
+
 

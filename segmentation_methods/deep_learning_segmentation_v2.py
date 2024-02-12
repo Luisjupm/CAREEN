@@ -27,8 +27,8 @@ path_parts = script_directory.split(os.path.sep)
 additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\main_module'
 
 sys.path.insert(0, additional_modules_directory)
-from main_v2 import P2p_getdata,get_istance,get_point_clouds_name, check_input
-from main_gui_v2 import show_features_window, definition_of_labels_type_1,definition_run_cancel_buttons_type_1, definition_of_buttons_type_1
+from main import P2p_getdata,get_istance,get_point_clouds_name, check_input
+from main_gui import show_features_window, definition_of_labels_type_1,definition_run_cancel_buttons_type_1, definition_of_buttons_type_1
 
 #%% ADDING PATHS FROM THE CONFIGS FILES
 current_directory= os.path.dirname(os.path.abspath(__file__))
