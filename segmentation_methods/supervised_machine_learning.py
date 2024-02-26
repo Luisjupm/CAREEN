@@ -447,7 +447,7 @@ class GUI_mls(tk.Frame):
                     self.set_up_parameters_aml["early_stop"]                  
                     ]
                 row_positions = [0,1,2,3,5,6,7,8]        
-                aml_entries = definition_of_entries_type_1 ("aml",entry_insert,row_positions,set_up_window,1) 
+                aml_entries = definition_of_entries_type_1 ("aml",entry_insert,row_positions,set_up_window,2) 
                 
                 # Combobox
                 combobox_insert = [
@@ -455,7 +455,7 @@ class GUI_mls(tk.Frame):
                     ]
                 row_positions = [4]
                 selected_element = ["accuracy"]
-                aml_comboboxes =definition_of_combobox_type_1 ("aml",combobox_insert,row_positions, selected_element,set_up_window,1)
+                aml_comboboxes =definition_of_combobox_type_1 ("aml",combobox_insert,row_positions, selected_element,set_up_window,2)
                                               
                 # Buttons  
                 _=definition_ok_cancel_buttons_type_1("aml",[lambda: on_ok_button_click(algo),None],9,set_up_window,1) 
@@ -859,6 +859,7 @@ class GUI_mls(tk.Frame):
             
             # RUN THE COMMAND LINE
             command = path_prediction + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
+            print(command)
             os.system(command) 
             
             # CREATE THE RESULTING POINT CLOUD 

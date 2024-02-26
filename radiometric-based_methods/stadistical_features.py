@@ -7,7 +7,6 @@ Created on Sun Jan  7 13:42:37 2024
 import tkinter as tk
 import sys
 import traceback
-import sys
 import os
 import numpy as np
 import open3d as o3d
@@ -218,16 +217,19 @@ class GUI_sf(tk.Frame):
             CC.updateUI() 
             window.destroy()
             
-            print("The process has been finished")       
-#%% RUN THE GUI        
-try:
-    # START THE MAIN WINDOW        
-    window = tk.Tk()
-    app = GUI_sf()
-    app.main_frame(window)
-    window.mainloop()    
-except Exception as e:
-    print("An error occurred during the computation of the algorithm:", e)
-    # Optionally, print detailed traceback
-    traceback.print_exc()
-    window.destroy()
+            print("The process has been finished")
+            
+            
+#%% RUN THE GUI
+if __name__ == "__main__":        
+    try:
+        # START THE MAIN WINDOW        
+        window = tk.Tk()
+        app = GUI_sf()
+        app.main_frame(window)
+        window.mainloop()    
+    except Exception as e:
+        print("An error occurred during the computation of the algorithm:", e)
+        # Optionally, print detailed traceback
+        traceback.print_exc()
+        window.destroy()  

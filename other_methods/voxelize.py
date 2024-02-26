@@ -8,6 +8,8 @@ import cccorelib
 import pycc
 import os
 import sys
+import traceback
+
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
@@ -23,39 +25,85 @@ path_parts = script_directory.split(os.path.sep)
 
 additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\main_module'
 sys.path.insert(0, additional_modules_directory)
-from main import P2p_getdata,get_istance,get_point_clouds_name
-
-#%% SET-UP THE TEMPORAL FOLDER
-current_directory=os.path.dirname(os.path.abspath(__file__))
-input_file=os.path.join(os.path.dirname(current_directory),'temp_folder\\','voxelized_point_cloud.ply')   
+from main import P2p_getdata,get_istance,get_point_clouds_name, check_input, write_yaml_file
+from main_gui import show_features_window, definition_of_labels_type_1,definition_of_entries_type_1, definition_of_combobox_type_1,definition_ok_cancel_buttons_type_1,definition_run_cancel_buttons_type_1, definition_of_buttons_type_1
 
 #%% CREATE A INSTANCE WITH THE ELEMENT SELECTED
 CC = pycc.GetInstance() 
 entities= CC.getSelectedEntities()[0]
-#%% INPUTS AT THE BEGINING
+
+#%% INITIAL OPERATIONS
 name_list=get_point_clouds_name()
 
-#%% VOXELIZATION OF THE POINT CLOUD
-v_size=0.02
-def run_algorithm():
-    # Get the input values
-    v_size=float(entry_voxel_size.get()) 
-    # Error if there is not selection
-    if combo1.get()=="Not selected":
-        raise RuntimeError("Please select a point cloud to process the data")
-    if not CC.haveSelection():
-        raise RuntimeError("No folder or entity selected")
-    else:
-        # Load the selected point cloud. If the entity has the attribute points is a folder. Otherwise is a point cloud
-        if hasattr (entities, 'points'):            
-            pc=entities
-        else:            
-            for ii, item in enumerate (name_list):
-                if item== combo1.get():
-                    pc = entities.getChild(ii)
-                    break 
-        if hasattr(pc, 'points'): # If there is selection and the selected entity is a point
-            # Transform the selected point cloud to a open3d point cloud
+#%% GUI
+class GUI_voxelize(tk.Frame):
+    def __init__(self, master=None, **kwargs): # Initial parameters. It is in self because we can update during the interaction with the user
+        super().__init__(master, **kwargs)
+        
+        # Directory to save the files (output)
+        self.output_directory=os.getcwd() # The working directory
+    
+    def main_frame (self, window):    # Main frame of the GUI  
+
+        # Function to create tooltip
+        def create_tooltip(widget, text):
+            widget.bind("<Enter>", lambda event: show_tooltip(text))
+            widget.bind("<Leave>", hide_tooltip)
+
+        def show_tooltip(text):
+            tooltip.config(text=text)
+            tooltip.place(relx=0.5, rely=0.5, anchor="center", bordermode="outside")
+            
+        def hide_tooltip(event):
+            tooltip.place_forget()
+
+        tooltip = tk.Label(window, text="", relief="solid", borderwidth=1)
+        tooltip.place_forget()
+        
+        # Destroy the window
+        def destroy (self): 
+            window.destroy ()
+            
+        window.title("Voxelize point cloud")
+        # Disable resizing the window
+        window.resizable(False, False)
+        # Remove minimize and maximize buttons (title bar only shows close button)
+        window.attributes('-toolwindow', 1)
+        
+        # Create a frame for the form
+        form_frame = tk.Frame(window, padx=10, pady=10)
+        form_frame.pack()
+        
+        # Labels
+        label_texts = [
+            "Select a point cloud:",
+            "Select the voxel size:",
+        ]
+        row_positions = [0,1]        
+        definition_of_labels_type_1 ("window",label_texts,row_positions,form_frame,0)
+        
+        # Combobox
+        combo_point_cloud=ttk.Combobox (form_frame,values=name_list)
+        combo_point_cloud.grid(column=1, row=0, sticky="e", pady=2)
+        combo_point_cloud.set("Not selected")
+        
+        # Entries
+        entry_voxel_size = ttk.Entry(form_frame,width=5)
+        entry_voxel_size.insert(0,0.02)
+        entry_voxel_size.grid(row=1, column=1, sticky="e",pady=2)
+        
+        # Buttons
+        _=definition_run_cancel_buttons_type_1("window",
+                                     [lambda:run_algorithm_1(self,name_list,combo_point_cloud.get(),float(entry_voxel_size.get())),lambda:destroy(self)],
+                                     2,
+                                     form_frame,
+                                     1
+                                     )
+
+        def run_algorithm_1(self,name_list,pc_name,v_size):
+            # Check if the selection is a point cloud
+            pc=check_input(name_list,pc_name)
+            
             pcd = o3d.geometry.PointCloud()            
             pcd.points = o3d.utility.Vector3dVector(pc.points())
             # pcd.color= o3d.utility.Vector3dVector(pc.colors()[:,0],pc.colors()[:,1],pc.colors()[:,2])
@@ -74,56 +122,34 @@ def run_algorithm():
             vox_mesh.translate(voxel_grid.origin, relative=True)
             vox_mesh.merge_close_vertices(0.0000001)
             # Save the file and then load the file with cloudcompare. It is used a temporal folder for this process. Finally the temporal file is deleted
-            o3d.io.write_triangle_mesh(input_file,vox_mesh)        
+            o3d.io.write_triangle_mesh(pc_name,vox_mesh)        
             params = pycc.FileIOFilter.LoadParameters()
             params.alwaysDisplayLoadDialog=False
-            CC.loadFile(input_file, params)
-            os.remove(input_file)
-        else: # If there is selection is a folder perform a for loop chosing the children and checking if the children is a point cloud
-            raise RuntimeError("The selected entity is not a point cloud")
-    #%% UPDATE THE DB    
-    CC.updateUI()        
-    print('The process has been completed!')  
-    window.destroy()  # Close the window   
-def destroy():
-    window.destroy()  # Close the window        
-#%% GUI
-# Create the main window
-window = tk.Tk()
+            CC.loadFile(pc_name, params)
+            os.remove(pc_name)
+            
+                
+            CC.updateUI()        
+            print('The process has been completed')  
+            window.destroy()  # Close the window
+            
+    def show_frame(self,window):
+        self.main_frame(window)
+        self.grid(row=1, column=0, pady=10)
 
-window.title("Voxelize point cloud")
-# Disable resizing the window
-window.resizable(False, False)
-# Remove minimize and maximize buttons (title bar only shows close button)
-window.attributes('-toolwindow', 1)
+    def hide_frame(self):
+        self.grid_forget()
 
-# Create a frame for the form
-form_frame = tk.Frame(window, padx=10, pady=10)
-form_frame.pack()
-
-# Labels
-label_pc = tk.Label(form_frame, text="Select a point cloud:")
-label_pc.grid(row=0, column=0, sticky="w",pady=2)
-label_tolerance = tk.Label(form_frame, text="Select the voxel size:")
-label_tolerance.grid(row=1, column=0, sticky="w",pady=2)
-
-
-# Combobox
-combo1=ttk.Combobox (form_frame,values=name_list)
-combo1.grid(column=1, row=0, sticky="e", pady=2)
-combo1.set("Not selected")
-# Entries
-entry_voxel_size = tk.Entry(form_frame,width=5)
-entry_voxel_size.insert(0,0.02)
-entry_voxel_size.grid(row=1, column=1, sticky="e",pady=2)
-
-# Buttons
-run_button = tk.Button(form_frame, text="OK", command=run_algorithm,width=10)
-cancel_button = tk.Button(form_frame, text="Cancel", command=destroy,width=10)
-run_button.grid(row=2, column=1, sticky="e",padx=100)
-cancel_button.grid(row=2, column=1, sticky="e")
-
-
-#%% START THE GUI
-# Start the main event loop
-window.mainloop()
+#%% RUN THE GUI
+if __name__ == "__main__":        
+    try:
+        # START THE MAIN WINDOW        
+        window = tk.Tk()
+        app = GUI_voxelize()
+        app.main_frame(window)
+        window.mainloop()    
+    except Exception as e:
+        print("An error occurred during the computation of the algorithm:", e)
+        # Optionally, print detailed traceback
+        traceback.print_exc()
+        window.destroy()

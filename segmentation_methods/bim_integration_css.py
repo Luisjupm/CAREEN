@@ -90,7 +90,7 @@ class GUI_bicss(tk.Frame):
         # Labels
         label_texts = [
             "Choose point cloud:",
-            "Choose output directory:",
+            "Choose revit project:",
         ]
         row_positions = [0,1]        
         definition_of_labels_type_1 ("window",label_texts,row_positions,form_frame,0) 

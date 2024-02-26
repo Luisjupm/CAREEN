@@ -38,6 +38,94 @@ from main import P2p_getdata,get_istance,extract_longitudinal_axis, minBoundingR
 from main_gui import show_features_window, definition_of_labels_type_1,definition_of_entries_type_1, definition_of_combobox_type_1,definition_ok_cancel_buttons_type_1,definition_run_cancel_buttons_type_1, definition_of_buttons_type_1
 from ransac import RANSAC
 
+def arch_estimation(i,pcd,type_of_arch,thickness,num_iter_ransac,threshold_ransac,d_min,fixed_springs,percent,load_pc_section,save_path): 
+    # Possible issues with input variables
+    if percent >100:
+        percent=100
+    if percent <0:
+        percent=0
+        
+    # Extract the point cloud in a format to be process, algo the main axis (skeleton) of the arch
+    pcd_f,skeleton =extract_points_within_tolerance(pcd[['X','Y','Z']].values, thickness,True)
+    if fixed_springs: # In case of having fixed springs
+    
+        # Calculate the threshold because we chosen the fix springs option
+        difference_height=(pcd_f[:,2].max()-pcd_f[:,2].min())*(percent/100)
+        threshold_height = difference_height + (pcd_f[:,2].min())
+        
+        # Filter the DataFrame based on the condition
+        filtered_pcd_f = pcd_f[pcd_f[:,2] < threshold_height]
+        if len (filtered_pcd_f)<6 or len (filtered_pcd_f)<d_min:
+            raise RuntimeError("The threshold is too restrictive. At least one of the arches has less than 6 points or less than the number of minimum points for fitting the model. Please increse the percentage value") 
+        
+        # Create a istance of RANSAC depending on the type of arch (combo_type.get())
+        if type_of_arch=="Pointed arch":                
+            midpoint = sum(pcd_f[:,0]) / len(pcd_f[:,0])
+        ransac = RANSAC(filtered_pcd_f[:,0],filtered_pcd_f[:,2],num_iter_ransac,d_min,threshold_ransac,type_of_arch,midpoint)  
+    else: # In case of not having fixed springs
+
+        # Create a istance of RANSAC depending on the type of arch (combo_type.get())
+        ransac = RANSAC(pcd_f[:,0],pcd_f[:,2],num_iter_ransac,d_min,threshold_ransac,type_of_arch)  
+    
+    # execute ransac algorithm
+    _,outliers,inliers=ransac.execute_ransac()
+    
+    if fixed_springs and type_of_arch=="Circular arch" or type_of_arch=="Quarter arch": # In case of having fixed springs
+        
+    # initialize the inliers and outliers lists
+        inliers=[]
+        outliers=[]
+        
+        # get best model from ransac and store the data for plotting the best fit curve
+        a, b, r = ransac.best_model[0], ransac.best_model[1], ransac.best_model[2] 
+        
+        # compute the error between the whole data and the best model. This model was obtained from the reduced data
+        for ii in range(len(pcd_f)):
+            dis = np.sqrt((pcd_f[ii,0]-a)**2 + (pcd_f[ii,2]-b)**2)
+            if dis >= r:
+                distance=dis - r
+            else:
+                distance= r - dis   
+            if distance > threshold_ransac:
+                outliers.append(pcd_f[ii,:])
+            else:
+                inliers.append(pcd_f[ii,:]) 
+        
+        # Creating a NumPy array to be compatible with the rest of the code
+        if len (inliers)>0:
+            inliers_array = np.array(inliers)
+            inliers = inliers_array [:, [0, 2]]
+        if len (outliers)>0:
+            outliers_array = np.array(outliers)
+            outliers = outliers_array [:, [0, 2]] 
+    
+    # CREATE THE PLOT
+    if len (inliers)>0:
+        plt.scatter(inliers[:,0], inliers[:,1],color='g', label='Points consider as inliers')
+    if len (outliers)>0:
+        plt.scatter(outliers[:,0], outliers[:,1],color='r', label='Points consider as outliers')              
+    
+    # Create a scatter plot with blue dots for the best fit curve
+    plt.scatter(ransac.best_x_coordinates, ransac.best_y_coordinates, c='b', s=10, label="Estimated arch by using RANSAC")
+    plt.axis('scaled')
+    plt.xlabel('Longitudinal direction')
+    plt.ylabel('Vertical direction')        
+    plt.title('Section of arch_'+str(i))
+    plt.legend()
+    plt.grid(True)    
+        
+    # Save the plot as a PNG file
+    if type_of_arch=="Circular arch":
+        plt.savefig(save_path+'/circular_arch_'+str(i)+'.png')
+    elif type_of_arch=="Pointed arch":
+        plt.savefig(save_path+'/pointed_arch_'+str(i)+'.png')
+    elif type_of_arch=="Quarter arch":
+        plt.savefig(save_path+'/quarter_arch_'+str(i)+'.png')            
+   
+    # Clear the plot for the next iteration
+    plt.clf()     
+    return skeleton
+
 #%% GUI
 # Create the main window
 class GUI_arches(tk.Frame):
@@ -169,93 +257,7 @@ class GUI_arches(tk.Frame):
                                      )
         
         
-        def arch_estimation(i,pcd,type_of_arch,thickness,num_iter_ransac,threshold_ransac,d_min,fixed_springs,percent,load_pc_section,save_path): 
-            # Possible issues with input variables
-            if percent >100:
-                percent=100
-            if percent <0:
-                percent=0
-                
-            # Extract the point cloud in a format to be process, algo the main axis (skeleton) of the arch
-            pcd_f,skeleton =extract_points_within_tolerance(pcd[['X','Y','Z']].values, thickness,True)
-            if fixed_springs: # In case of having fixed springs
-            
-                # Calculate the threshold because we chosen the fix springs option
-                difference_height=(pcd_f[:,2].max()-pcd_f[:,2].min())*(percent/100)
-                threshold_height = difference_height + (pcd_f[:,2].min())
-                
-                # Filter the DataFrame based on the condition
-                filtered_pcd_f = pcd_f[pcd_f[:,2] < threshold_height]
-                if len (filtered_pcd_f)<6 or len (filtered_pcd_f)<d_min:
-                    raise RuntimeError("The threshold is too restrictive. At least one of the arches has less than 6 points or less than the number of minimum points for fitting the model. Please increse the percentage value") 
-                
-                # Create a istance of RANSAC depending on the type of arch (combo_type.get())
-                if type_of_arch=="Pointed arch":                
-                    midpoint = sum(pcd_f[:,0]) / len(pcd_f[:,0])
-                ransac = RANSAC(filtered_pcd_f[:,0],filtered_pcd_f[:,2],num_iter_ransac,d_min,threshold_ransac,type_of_arch,midpoint)  
-            else: # In case of not having fixed springs
-
-                # Create a istance of RANSAC depending on the type of arch (combo_type.get())
-                ransac = RANSAC(pcd_f[:,0],pcd_f[:,2],num_iter_ransac,d_min,threshold_ransac,type_of_arch)  
-            
-            # execute ransac algorithm
-            _,outliers,inliers=ransac.execute_ransac()
-            
-            if fixed_springs and type_of_arch=="Circular arch" or type_of_arch=="Quarter arch": # In case of having fixed springs
-                
-            # initialize the inliers and outliers lists
-                inliers=[]
-                outliers=[]
-                
-                # get best model from ransac and store the data for plotting the best fit curve
-                a, b, r = ransac.best_model[0], ransac.best_model[1], ransac.best_model[2] 
-                
-                # compute the error between the whole data and the best model. This model was obtained from the reduced data
-                for ii in range(len(pcd_f)):
-                    dis = np.sqrt((pcd_f[ii,0]-a)**2 + (pcd_f[ii,2]-b)**2)
-                    if dis >= r:
-                        distance=dis - r
-                    else:
-                        distance= r - dis   
-                    if distance > threshold_ransac:
-                        outliers.append(pcd_f[ii,:])
-                    else:
-                        inliers.append(pcd_f[ii,:]) 
-                
-                # Creating a NumPy array to be compatible with the rest of the code
-                if len (inliers)>0:
-                    inliers_array = np.array(inliers)
-                    inliers = inliers_array [:, [0, 2]]
-                if len (outliers)>0:
-                    outliers_array = np.array(outliers)
-                    outliers = outliers_array [:, [0, 2]] 
-            
-            # CREATE THE PLOT
-            if len (inliers)>0:
-                plt.scatter(inliers[:,0], inliers[:,1],color='g', label='Points consider as inliers')
-            if len (outliers)>0:
-                plt.scatter(outliers[:,0], outliers[:,1],color='r', label='Points consider as outliers')              
-            
-            # Create a scatter plot with blue dots for the best fit curve
-            plt.scatter(ransac.best_x_coordinates, ransac.best_y_coordinates, c='b', s=10, label="Estimated arch by using RANSAC")
-            plt.axis('scaled')
-            plt.xlabel('Longitudinal direction')
-            plt.ylabel('Vertical direction')        
-            plt.title('Section of arch_'+str(i))
-            plt.legend()
-            plt.grid(True)    
-                
-            # Save the plot as a PNG file
-            if type_of_arch=="Circular arch":
-                plt.savefig(save_path+'/circular_arch_'+str(i)+'.png')
-            elif type_of_arch=="Pointed arch":
-                plt.savefig(save_path+'/pointed_arch_'+str(i)+'.png')
-            elif type_of_arch=="Quarter arch":
-                plt.savefig(save_path+'/quarter_arch_'+str(i)+'.png')            
-           
-            # Clear the plot for the next iteration
-            plt.clf()     
-            return skeleton
+        
 
    
         def run_algorithm_1(self,type_of_arch,thickness,num_iter_ransac,threshold_ransac,d_min,fixed_springs,percent,load_pc_section,save_path):

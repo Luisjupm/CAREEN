@@ -398,7 +398,7 @@ class GUI_mlu(tk.Frame):
                 entry_param1_dbscan.insert(0,self.set_up_parameters_dbscan["clusters"])
                 entry_param1_dbscan.grid(row=0, column=1)
                 
-                label_param2_dbscan = tk.Label(set_up_window, text="Mimimum number of points to create a cluster:")
+                label_param2_dbscan = tk.Label(set_up_window, text="Minimum number of points to create a cluster:")
                 label_param2_dbscan.grid(row=1, column=0, sticky=tk.W)
                 
                 entry_param2_dbscan = tk.Entry(set_up_window)

@@ -102,7 +102,7 @@ class GUI_bid(tk.Frame):
             "Choose point cloud:",
             "Representation strategy",
             "Type of damage",
-            "Choose output directory:",
+            "Choose revit project:",
         ]
         row_positions = [0,1,2,3]
         definition_of_labels_type_1 ("window",label_texts,row_positions,form_frame,0) 

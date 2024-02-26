@@ -49,23 +49,23 @@ sys.path.insert(0, additional_modules_directory)
 from geometrical_features import GUI_gf
 from analysis_of_arches import GUI_arches
 from analysis_of_deflections import GUI_deflection
-# from analysis_of_inclinations import GUI_inclination
-# from analysis_of_vaults import GUI_vaults
+from analysis_of_inclinations import GUI_inclination
+from analysis_of_vaults import GUI_vaults
 
 # Radiometric based methods
-additional_modules_directory_2=os.path.sep.join(path_parts[:-1])+ '\radiometric-based_methods'
-sys.path.insert(0, additional_modules_directory_2)
+additional_modules_directory=os.path.sep.join(path_parts[:-1])+ '\\radiometric-based_methods'
+sys.path.insert(0, additional_modules_directory)
 
 from color_conversion import GUI_cc
-# from stadistical_features import GUI_stadistical_features
+from stadistical_features import GUI_sf
 
 # Other methods
 additional_modules_directory=os.path.sep.join(path_parts[:-1])+ '\other_methods'
 sys.path.insert(0, additional_modules_directory)
 
-# from anisotropic_denoising import GUI_ad
+from anisotropic_denoising import GUI_ad
 from potree_converter_v2 import GUI_potree_converter
-# from voxelize import GUI_voxelize
+from voxelize import GUI_voxelize
 
 #%% ADDING assets
 current_directory= os.path.dirname(os.path.abspath(__file__))
@@ -86,24 +86,6 @@ contributor_images = [os.path.join(*contributors_directory, f"i{i}.{ext}")
                       for i in range(1, 18) 
                       for ext in extensions 
                       if os.path.exists(os.path.join(*contributors_directory, f"i{i}.{ext}"))]
-# contributor_images = [os.path.join(*contributors_directory, f"i{i}.{ext}") for i in range(1, 18) for ext in ["jpg" or "jpeg" or"png"]]
-# i1= os.path.join(*contributors_directory,"i1.jpg")
-# i2= os.path.join(*contributors_directory,"i2.jpeg")
-# i3= os.path.join(*contributors_directory,"i3.jpg")
-# i4= os.path.join(*contributors_directory,"i4.jpg")
-# i5= os.path.join(*contributors_directory,"i5.jpg")
-# i6= os.path.join(*contributors_directory,"i6.jpg")
-# i7= os.path.join(*contributors_directory,"i7.jpg")
-# i8= os.path.join(*contributors_directory,"i8.jpg")
-# i9= os.path.join(*contributors_directory,"i9.jpg")
-# i10= os.path.join(*contributors_directory,"i10.jpg")
-# i11= os.path.join(*contributors_directory,"i11.jpg")
-# i12= os.path.join(*contributors_directory,"i12.jpg")
-# i13= os.path.join(*contributors_directory,"i13.jpg")
-# i14= os.path.join(*contributors_directory,"i14.jpg")
-# i15= os.path.join(*contributors_directory,"i15.png")
-# i16= os.path.join(*contributors_directory,"i16.png")
-# i17= os.path.join(*contributors_directory,"i17.jpg")
 
 #%% GUI
 
@@ -135,8 +117,7 @@ class main_GUI(tk.Frame):
         self.toggle_window('gf', GUI_gf)
 
     def toggle_sf(self,root_gui):
-        print("This algorithm still doesn't working")
-        # self.toggle_window('sf', GUI_sf)
+        self.toggle_window('sf', GUI_sf)
 
     def toggle_arches(self,root_gui):
         self.toggle_window('arches', GUI_arches)
@@ -145,12 +126,10 @@ class main_GUI(tk.Frame):
         self.toggle_window('deflection', GUI_deflection)
 
     def toggle_inclination(self,root_gui):
-        print("This algorithm still doesn't working")
-        # self.toggle_window('inclination', GUI_inclination)
+        self.toggle_window('inclination', GUI_inclination)
 
     def toggle_vaults(self,root_gui):
-        print("This algorithm still doesn't working")
-        # self.toggle_window('vaults', GUI_vaults)
+        self.toggle_window('vaults', GUI_vaults)
 
     def toggle_cc(self,root_gui):
         self.toggle_window('cc', GUI_cc)
@@ -162,22 +141,18 @@ class main_GUI(tk.Frame):
         self.toggle_window('bid', GUI_bid)
 
     def toggle_anisotropic(self,root_gui):
-        print("This algorithm still doesn't working")
-        # self.toggle_window('anisotropic', GUI_anisotropic)
+        self.toggle_window('anisotropic', GUI_ad)
 
     def toggle_voxelize(self,root_gui):
-        print("This algorithm still doesn't working")
-        # self.toggle_window('voxelize', GUI_voxelize)
+        self.toggle_window('voxelize', GUI_voxelize)
 
     def toggle_pc(self,root_gui):
         self.toggle_window('pc', GUI_potree_converter)
     
     def open_pdf(self, event):
-        # Abrir el PDF en el lector de PDF predeterminado
         webbrowser.open(path_pdf_file, new=2)
         
     def open_license(self, event):
-        # Abrir el PDF en el lector de PDF predeterminado
         webbrowser.open(path_license, new=2)
     
     def load_and_display_image(self, path, width, height, parent_widget, column, row, columnspan=1, rowspan=1, sticky="nsew", pady= 1, padx= 1,):
@@ -238,6 +213,10 @@ class main_GUI(tk.Frame):
             for col, (button_text, command) in enumerate(buttons):
                 button = ttk.Button(frame, text=button_text, command=lambda cmd=command: cmd(root_gui))
                 button.grid(row=row, column=col, sticky="nsew", pady=4, padx=5)
+                
+        # Disabled button
+        bim_integration_button = next(button for frame_text, buttons in frames_and_buttons if frame_text == "BIM Integration" for button_text, _ in buttons if button_text == "Open")
+        bim_integration_button.config(state="disabled")
 
         # Label with hyperlink
         label_text = "For more information: open the guide in your default PDF visualizer"
@@ -282,6 +261,10 @@ class main_GUI(tk.Frame):
             for col, (button_text, command) in enumerate(buttons):
                 button = ttk.Button(frame, text=button_text, command=lambda cmd=command: cmd(root_gui))
                 button.grid(row=row, column=col, sticky="nsew", pady=2, padx=5)
+        
+        # Disabled button
+        bim_integration_button = next(button for frame_text, buttons in frames_and_buttons if frame_text == "BIM Integration" for button_text, _ in buttons if button_text == "Open")
+        bim_integration_button.config(state="disabled")
         
         # Label with hyperlink
         label_text = "For more information: open the guide in your default PDF visualizer"
@@ -344,19 +327,18 @@ class main_GUI(tk.Frame):
                          width = 55, height = 25)
         v2.grid(row=0, column=4, rowspan=40, padx=5, sticky="nsew")
 
-        
 
         # TAB4 = ABOUT
         
-        # Creamos un frame dentro de tab4 para colocar el Canvas
+        # Create a fram inside tab4 to positionate Canvas
         canvas_frame = tk.Frame(tab4)
         canvas_frame.grid(row=0, column=0, sticky="nsew")
 
-        # Creamos un Canvas dentro del frame
+        # Create Canvas inside frame
         canvas = tk.Canvas(canvas_frame)
         canvas.grid(row=0, column=0, sticky="nsew")
-
-        # Creamos un frame dentro del Canvas para colocar los widgets
+        
+        # Create frame inside canvas to add widgets
         inner_frame = tk.Frame(canvas)
         canvas.create_window((0, 0), window=inner_frame, anchor=tk.NW)
         
@@ -367,7 +349,7 @@ class main_GUI(tk.Frame):
         self.load_and_display_image(path_about_logo_3, 80, 80, inner_frame, column=5, row=0, rowspan=2,sticky="e")
         self.load_and_display_image(path_about_logo_4, 100, 80, inner_frame, column=6, row=0, rowspan=2,sticky="e")
         
-
+        # Labels
         label_title = tk.Label(inner_frame, text="SEG4D", font=("Helvetica", 16, "bold"), padx=5, pady=5)
         label_title.grid(row=0, column=2, sticky="w", padx=1, pady=0)
         
@@ -377,7 +359,7 @@ class main_GUI(tk.Frame):
         label_copyright= tk.Label(inner_frame, text="Copyright © 2024 Luis Javier Sánchez, Pablo Sanz & Rubén Santamaría", font=("Helvetica", 10, "bold"), padx=5)
         label_copyright.grid(row=2, column=0, columnspan=5, sticky="w", padx=1, pady=1)
         
-        # Label with information about the software and the authors
+        # Labels with information about the software and the authors
         label_text = ("This software has been funded by the Comunidad de Madrid through the call Research Grants for Young Investigators from Universidad\n"
                         "Politécnica de Madrid. It has been developed by the AIPA research team."
                       )
@@ -389,15 +371,11 @@ class main_GUI(tk.Frame):
                         "For technical support, contact us at:\n"
                         "lj.sanchez@upm.es\n"
                         "p.sanzh@upm.es\n"
-                        "ruben.santamaria.maestro@alumnos.upm.es\n\n"
+                        "ruben.santamaria.maestro@upm.es\n\n"
                         "Version: 1.0")
         
         label_about = tk.Label(inner_frame, text=label_text, justify="right", padx=5, pady=5)
         label_about.grid(row=4, column=4, columnspan=3,rowspan=4, sticky="e", padx=5, pady=5)
-        
-        # Create a vertical line (separator) in the middle of the window
-        # separator = ttk.Separator(inner_frame, orient="vertical")
-        # separator.grid(row=4, column=3, rowspan=4, sticky="ns", padx=0 , pady=10)
 
         # Label with hyperlink
         label_text = "See LICENSE"
@@ -429,7 +407,7 @@ class main_GUI(tk.Frame):
             "of Construction and Architectural Technologies. ORCID: 0000-0001-6758-2234.",
             "Pablo Sanz Honrado (p.sanzh@upm.es). Pre-doctoral fellow. Universidad Politécnica de Madrid. Department of\n"
             "Construction and Architectural Technologies. ORCID: 0000-0002-8090-1794.",
-            "Rubén Santamaría Maestro (ruben.santamaria.maestro@alumnos.upm.es). Pre-doctoral fellow. Universidad Politécnica de\n"
+            "Rubén Santamaría Maestro (ruben.santamaria.maestro@upm.es). Pre-doctoral fellow. Universidad Politécnica de\n"
             "Madrid. Department of Construction and Architectural Technologies. ORCID: 0009-0001-0141-2002.",
             "Paula Villanueva Llauradó (paula.villanueva@upm.es). PhD in Structural Engineering. Universidad Politécnica de Madrid.\n"
             "Department of Structures. ORCID: 0009-0001-0141-2002.",
@@ -451,7 +429,7 @@ class main_GUI(tk.Frame):
             "Department of Construction and Architectural Technologies. ORCID: 0000-0002-9390-2083.",
             "Esther Moreno Fernández (esther.moreno@upm.es). PhD in Materials Engineering and Chemical Engineering. Universidad\n"
             "Politécnica de Madrid. Department of Construction and Architectural Technologies. ORCID: 0000-0001-6625-7093.",
-            "Cristina Mayo Corrochano (esther.moreno@upm.es). PhD in Architecture. ESTUDIO MAYO. Madrid\n",
+            "Cristina Mayo Corrochano (info@estudiomayo.com). PhD in Architecture. ESTUDIO MAYO. Madrid\n",
             "Beatriz del Río Calleja (b.delrio@alumnos.upm.es). PhD in Architecture. Universidad Politécnica de Madrid.\n"
             "Department of Construction and Architectural Technologies. ORCID: 0000-0002-9998-8789.",
             "David Mencías Carrizosa (d.mencias@upm.es). PhD in Architecture. Universidad Politécnica de Madrid.\n"
@@ -466,11 +444,10 @@ class main_GUI(tk.Frame):
             label_about = tk.Label(inner_frame, text=label_text, justify="left", padx=5, pady=5)
             label_about.grid(row=i, column=1, columnspan=6, sticky="nw", padx=1, pady=1)
         
-        
-        # Configuramos el Canvas para que se expanda con el cambio de tamaño
+        # Configurate Canvas to expand with the size change
         inner_frame.bind("<Configure>", lambda event: canvas.configure(scrollregion=canvas.bbox("all")))
 
-        # Agregamos la barra de desplazamiento
+        # Add scroll bar
         scrollbar = tk.Scrollbar(canvas_frame, orient=tk.VERTICAL, command=canvas.yview)
         scrollbar.grid(row=0, column=1, sticky="ns")
         canvas.config(yscrollcommand=scrollbar.set)
@@ -478,14 +455,13 @@ class main_GUI(tk.Frame):
         def scroll_wheel(event):
             canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
         
-        # Asignar el evento a la función scroll_wheel
         canvas.bind_all("<MouseWheel>", scroll_wheel)
         
-        # Configuramos el comportamiento del Canvas con respecto al tamaño de la ventana
+        # Configurate the Canvas behaviour with te window size
         canvas.grid_rowconfigure(0, weight=1)
         canvas.grid_columnconfigure(0, weight=1)
         
-        # Configuramos la expansión de inner_frame
+        # Configurate the expand of inner_frame
         tab4.grid_rowconfigure(0, weight=1)
         tab4.grid_columnconfigure(0, weight=1)
         canvas_frame.grid_rowconfigure(0, weight=1)

@@ -171,7 +171,7 @@ def show_features_window(self,name_list,training_pc_name="Not selected",excluded
         checkbuttons_vars.append(var)
         ttk.Checkbutton(features_frame, text=value, variable=var).pack(anchor="w")
         
-def definition_of_labels_type_1(header, label_texts, row_positions, window, column=0, disable_labels=False):
+def definition_of_labels_type_1(header, label_texts, row_positions, window, column=0, disabled_index=None):
     """
     This function allows to create the labels of a tab
 
@@ -200,8 +200,10 @@ def definition_of_labels_type_1(header, label_texts, row_positions, window, colu
         labels[label_name] = ttk.Label(window, text=text)
         labels[label_name].grid(column=column, row=row, pady=2, sticky="w")
         
-        if disable_labels:
+        if idx == disabled_index:
             labels[label_name].config(state=tk.DISABLED)
+    
+    return labels
 
 def definition_of_entries_type_1 (header,entry_insert,row_positions,window,column=1):
     
