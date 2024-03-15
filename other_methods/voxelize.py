@@ -28,6 +28,10 @@ sys.path.insert(0, additional_modules_directory)
 from main import P2p_getdata,get_istance,get_point_clouds_name, check_input, write_yaml_file
 from main_gui import show_features_window, definition_of_labels_type_1,definition_of_entries_type_1, definition_of_combobox_type_1,definition_ok_cancel_buttons_type_1,definition_run_cancel_buttons_type_1, definition_of_buttons_type_1
 
+#%% SET-UP THE TEMPORAL FOLDER
+# current_directory=os.path.dirname(os.path.abspath(__file__))
+# input_file=os.path.join(os.path.dirname(current_directory),'temp_folder\\','voxelized_point_cloud.ply')
+
 #%% CREATE A INSTANCE WITH THE ELEMENT SELECTED
 CC = pycc.GetInstance() 
 entities= CC.getSelectedEntities()[0]
@@ -40,25 +44,22 @@ class GUI_voxelize(tk.Frame):
     def __init__(self, master=None, **kwargs): # Initial parameters. It is in self because we can update during the interaction with the user
         super().__init__(master, **kwargs)
         
+        self.parameters_voxelize= {
+            "voxel_size": 0.02
+            }
+        
         # Directory to save the files (output)
         self.output_directory=os.getcwd() # The working directory
     
     def main_frame (self, window):    # Main frame of the GUI  
-
-        # Function to create tooltip
-        def create_tooltip(widget, text):
-            widget.bind("<Enter>", lambda event: show_tooltip(text))
-            widget.bind("<Leave>", hide_tooltip)
-
-        def show_tooltip(text):
-            tooltip.config(text=text)
-            tooltip.place(relx=0.5, rely=0.5, anchor="center", bordermode="outside")
-            
-        def hide_tooltip(event):
-            tooltip.place_forget()
-
-        tooltip = tk.Label(window, text="", relief="solid", borderwidth=1)
-        tooltip.place_forget()
+    
+        def save_file_dialog():
+            # Abrir el diálogo para seleccionar la ruta de guardado
+            directory = filedialog.askdirectory()
+            self.output_directory = directory 
+            # Mostrar la ruta seleccionada en el textbox correspondiente
+            entry_widget.delete(0, tk.END)
+            entry_widget.insert(0, self.output_directory)
         
         # Destroy the window
         def destroy (self): 
@@ -78,8 +79,9 @@ class GUI_voxelize(tk.Frame):
         label_texts = [
             "Select a point cloud:",
             "Select the voxel size:",
+            "Choose output directory:",
         ]
-        row_positions = [0,1]        
+        row_positions = [0,1,2]        
         definition_of_labels_type_1 ("window",label_texts,row_positions,form_frame,0)
         
         # Combobox
@@ -89,49 +91,122 @@ class GUI_voxelize(tk.Frame):
         
         # Entries
         entry_voxel_size = ttk.Entry(form_frame,width=5)
-        entry_voxel_size.insert(0,0.02)
+        entry_voxel_size.insert(0,self.parameters_voxelize["voxel_size"])
         entry_voxel_size.grid(row=1, column=1, sticky="e",pady=2)
         
+        entry_widget = ttk.Entry(form_frame, width=30)
+        entry_widget.grid(row=2, column=1, sticky="e", pady=2)
+        entry_widget.insert(0, self.output_directory)
+        
         # Buttons
+        row_buttons=[2]  
+        button_names=["..."]  
+        _=definition_of_buttons_type_1("window",
+                                       button_names,
+                                       row_buttons,
+                                       [lambda:save_file_dialog()],
+                                       form_frame,
+                                       2
+                                       ) 
+        
         _=definition_run_cancel_buttons_type_1("window",
-                                     [lambda:run_algorithm_1(self,name_list,combo_point_cloud.get(),float(entry_voxel_size.get())),lambda:destroy(self)],
-                                     2,
+                                     [lambda:run_algorithm(self,combo_point_cloud.get(),float(entry_voxel_size.get())),lambda:destroy(self)],
+                                     3,
                                      form_frame,
                                      1
                                      )
+        def run_algorithm(self,pc_name,v_size):
+            # Error if there is not selection
+            if pc_name=="Not selected":
+                raise RuntimeError("Please select a point cloud to process the data")
+            if not CC.haveSelection():
+                raise RuntimeError("No folder or entity selected")
+            else:
+                # Load the selected point cloud. If the entity has the attribute points is a folder. Otherwise is a point cloud
+                if hasattr (entities, 'points'):            
+        
+                    pc=entities
+                else:            
+                    for ii, item in enumerate (name_list):
+                        if item==pc_name:
+                            pc = entities.getChild(ii)
+                            break 
 
-        def run_algorithm_1(self,name_list,pc_name,v_size):
-            # Check if the selection is a point cloud
-            pc=check_input(name_list,pc_name)
+                if hasattr(pc, 'points'): # If there is selection and the selected entity is a point
+                    # Transform the selected point cloud to a open3d point cloud
+                    pcd = o3d.geometry.PointCloud()            
+                    pcd.points = o3d.utility.Vector3dVector(pc.points())
+                    # pcd.color= o3d.utility.Vector3dVector(pc.colors()[:,0],pc.colors()[:,1],pc.colors()[:,2])
+                    
+                    # Check if the selection is a point cloud
+                    pc_training=check_input(name_list,pc_name)
+                    
+                    # Transform the point cloud into a dataframe and select only the interseting columns
+                    input_pcd=P2p_getdata(pc_training,False,True,True)
+                    
+                    # Save the point cloud with the features selected
+                    input_file=os.path.join(self.output_directory,"input_point_cloud.xyz")
+                    input_pcd.to_csv(input_file,sep=' ',header=True,index=False)
+                    # Create the voxel model from the pcd point cloud
+                    voxel_grid=o3d.geometry.VoxelGrid.create_from_point_cloud(pcd,voxel_size=v_size)
+                    voxels=voxel_grid.get_voxels()
+                    vox_mesh=o3d.geometry.TriangleMesh()
+                    for v in voxels:
+                        cube=o3d.geometry.TriangleMesh.create_box(width=1, height=1,
+                        depth=1)
+                        cube.paint_uniform_color(v.color)
+                        cube.translate(v.grid_index, relative=False)
+                        vox_mesh+=cube
+                    vox_mesh.translate([0.5,0.5,0.5], relative=True)
+                    vox_mesh.scale(v_size, [0,0,0])
+                    vox_mesh.translate(voxel_grid.origin, relative=True)
+                    vox_mesh.merge_close_vertices(0.0000001)
+                    # Save the file and then load the file with cloudcompare. It is used a temporal folder for this process. Finally the temporal file is deleted
+                    o3d.io.write_triangle_mesh(input_file,vox_mesh)        
+                    params = pycc.FileIOFilter.LoadParameters()
+                    params.alwaysDisplayLoadDialog=False
+                    CC.loadFile(input_file, params)
+                    os.remove(input_file)
+                else: # If there is selection is a folder perform a for loop chosing the children and checking if the children is a point cloud
+                    raise RuntimeError("The selected entity is not a point cloud")
+  
+            CC.updateUI()        
+            print('The process has been completed!')  
+            window.destroy()  # Close the window
             
-            pcd = o3d.geometry.PointCloud()            
-            pcd.points = o3d.utility.Vector3dVector(pc.points())
-            # pcd.color= o3d.utility.Vector3dVector(pc.colors()[:,0],pc.colors()[:,1],pc.colors()[:,2])
-            # Create the voxel model from the pcd point cloud
-            voxel_grid=o3d.geometry.VoxelGrid.create_from_point_cloud(pcd,voxel_size=v_size)
-            voxels=voxel_grid.get_voxels()
-            vox_mesh=o3d.geometry.TriangleMesh()
-            for v in voxels:
-                cube=o3d.geometry.TriangleMesh.create_box(width=1, height=1,
-                depth=1)
-                cube.paint_uniform_color(v.color)
-                cube.translate(v.grid_index, relative=False)
-                vox_mesh+=cube
-            vox_mesh.translate([0.5,0.5,0.5], relative=True)
-            vox_mesh.scale(v_size, [0,0,0])
-            vox_mesh.translate(voxel_grid.origin, relative=True)
-            vox_mesh.merge_close_vertices(0.0000001)
-            # Save the file and then load the file with cloudcompare. It is used a temporal folder for this process. Finally the temporal file is deleted
-            o3d.io.write_triangle_mesh(pc_name,vox_mesh)        
-            params = pycc.FileIOFilter.LoadParameters()
-            params.alwaysDisplayLoadDialog=False
-            CC.loadFile(pc_name, params)
-            os.remove(pc_name)
+            
+        # def run_algorithm_1(self,name_list,pc_name,v_size):
+        #     # Check if the selection is a point cloud
+        #     pc=check_input(name_list,pc_name)
+            
+        #     pcd = o3d.geometry.PointCloud()            
+        #     pcd.points = o3d.utility.Vector3dVector(pc.points())
+        #     # pcd.color= o3d.utility.Vector3dVector(pc.colors()[:,0],pc.colors()[:,1],pc.colors()[:,2])
+        #     # Create the voxel model from the pcd point cloud
+        #     voxel_grid=o3d.geometry.VoxelGrid.create_from_point_cloud(pcd,voxel_size=v_size)
+        #     voxels=voxel_grid.get_voxels()
+        #     vox_mesh=o3d.geometry.TriangleMesh()
+        #     for v in voxels:
+        #         cube=o3d.geometry.TriangleMesh.create_box(width=1, height=1,
+        #         depth=1)
+        #         cube.paint_uniform_color(v.color)
+        #         cube.translate(v.grid_index, relative=False)
+        #         vox_mesh+=cube
+        #     vox_mesh.translate([0.5,0.5,0.5], relative=True)
+        #     vox_mesh.scale(v_size, [0,0,0])
+        #     vox_mesh.translate(voxel_grid.origin, relative=True)
+        #     vox_mesh.merge_close_vertices(0.0000001)
+        #     # Save the file and then load the file with cloudcompare. It is used a temporal folder for this process. Finally the temporal file is deleted
+        #     o3d.io.write_triangle_mesh(pc_name,vox_mesh)        
+        #     params = pycc.FileIOFilter.LoadParameters()
+        #     params.alwaysDisplayLoadDialog=False
+        #     CC.loadFile(pc_name, params)
+        #     os.remove(pc_name)
             
                 
-            CC.updateUI()        
-            print('The process has been completed')  
-            window.destroy()  # Close the window
+        #     CC.updateUI()        
+        #     print('The process has been completed')  
+        #     window.destroy()  # Close the window
             
     def show_frame(self,window):
         self.main_frame(window)

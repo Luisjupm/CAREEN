@@ -36,6 +36,7 @@ sys.path.insert(0, additional_modules_directory_2)
 from main import P2p_getdata,get_istance,get_point_clouds_name
 from main_gui import show_features_window, definition_of_labels_type_1,definition_of_entries_type_1, definition_of_combobox_type_1,definition_ok_cancel_buttons_type_1,definition_run_cancel_buttons_type_1, definition_of_buttons_type_1
 from analysis_of_arches import arch_estimation
+
 #%% INPUTS AT THE BEGINING
 name_list=get_point_clouds_name()
 
@@ -258,11 +259,11 @@ class GUI_vaults(tk.Frame):
         
         # Button
         row_buttons=[8,9]  
-        button_names=["..."]  
+        button_names=["...","..."]  
         _=definition_of_buttons_type_1("window",
                                        button_names,
                                        row_buttons,
-                                       [lambda: show_set_up_window(self),lambda:save_file_dialog(1)],
+                                       [lambda: show_set_up_window(self),lambda:save_file_dialog()],
                                        form_frame,
                                        2
                                        )

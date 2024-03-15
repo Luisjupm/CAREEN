@@ -106,8 +106,7 @@ class GUI_ad(tk.Frame):
                     point_cloud = pycc.ccPointCloud(xyz_load[:,0], xyz_load[:,1], xyz_load[:,2])
                     point_cloud.setName(entities.getName()+'_denoised')
                     CC.addToDB(point_cloud)
-                    os.remove(input_file)
-                    os.remove(output_file)        
+       
             # RUN THE CMD THE SAME NUMBER THAN THE NUMBER OF POINT CLOUD WE HAVE
                 else:
                     entities = CC.getSelectedEntities()[0]
@@ -128,8 +127,7 @@ class GUI_ad(tk.Frame):
                             point_cloud = pycc.ccPointCloud(xyz_load[:,0], xyz_load[:,1], xyz_load[:,2])
                             point_cloud.setName(pc.getName()+'_denoised')
                             CC.addToDB(point_cloud)
-                            os.remove(input_file)
-                            os.remove(output_file)
+                            
             # UPDATE THE DB    
                 CC.updateUI()
                 print('The denosing stage has been finished')

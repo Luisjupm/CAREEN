@@ -423,18 +423,12 @@ class GUI_inclination(tk.Frame):
                              file.write(f"{item[0]}\t{item[1]:.3f}\t{item[2]:.3f}\t{item[3]:.3f}\t{item[4]:.3f}\t{item[5]:.3f}\t{item[6]}\t{item[7]}\n")   
             print('The process has been finished')
             window.destroy()  # Close the window    
-        
-    def show_frame(self,window):
-        self.main_frame(window)
-        self.grid(row=1, column=0, pady=10)
 
-    def hide_frame(self):
-        self.grid_forget()
         
 #%% START THE GUI        
 if __name__ == "__main__":
     try:        
-        window = tk.Tk()
+        window = tk.Toplevel()
         app = GUI_inclination()
         app.main_frame(window)
         window.mainloop()    

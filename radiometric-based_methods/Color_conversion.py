@@ -14,7 +14,7 @@ import os
 import sys
 import traceback
 
-# ADDING THE MAIN MODULE FOR ADDITIONAL FUNCTIONS
+#%% ADDING THE MAIN MODULE FOR ADDITIONAL FUNCTIONS
 
 script_directory = os.path.abspath(__file__)
 path_parts = script_directory.split(os.path.sep)
@@ -23,13 +23,16 @@ additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\main_module'
 print (additional_modules_directory)
 sys.path.insert(0, additional_modules_directory)
 from main import P2p_getdata,get_istance
+from main_gui import show_features_window, definition_of_labels_type_1,definition_of_entries_type_1, definition_of_combobox_type_1,definition_ok_cancel_buttons_type_1,definition_run_cancel_buttons_type_1, definition_of_buttons_type_1
 
-
-
-# DEFINE A CLASS FOR THE WINDOW (IT HAS ANOTHER POP-UP WINDOWS)
+#%% GUI
 class GUI_cc(tk.Frame):
-
-   
+    def __init__(self, master=None, **kwargs): # Initial parameters. It is in self because we can update during the interaction with the user
+        super().__init__(master, **kwargs)
+        
+        # Directory to save the files (output)
+        self.output_directory=os.getcwd() # The working directory
+    
     # Convert RGB to HSV function
     def rgb_to_hsv(self,row):
         r, g, b = row['R'], row['G'], row['B']
@@ -51,7 +54,6 @@ class GUI_cc(tk.Frame):
         i = 0.596 * r - 0.274 * g - 0.322 * b
         q = 0.211 * r - 0.523 * g + 0.312 * b
         return pd.Series([y, i, q])
-    
     
     # Convert RGB to YUV function
     def rgb_to_yuv(self,row):
@@ -92,101 +94,103 @@ class GUI_cc(tk.Frame):
                  pc.addScalarField("Y(YUV)", pcd['Y(YUV)'])
                  pc.addScalarField("U(YUV)", pcd['U(YUV)'])
                  pc.addScalarField("V(YUV)", pcd['V(YUV)'])  
-    def __init__(self):
+    
+    def main_frame (self,window):
         
-        ## CONTROL THE SELECTION OF THE INPUT
-        CC = pycc.GetInstance() 
-        if not CC.haveSelection():
-            raise RuntimeError("No folder or point cloud has been selected")
-      
-        
-        super().__init__()
-        self.title("Color maps")
+        def destroy(self):
+            window.destroy()  # Close the window
+  
+        window.title("Color maps")
         # Disable resizing the window
-        self.resizable(False, False)
+        window.resizable(False, False)
         # Remove minimize and maximize buttons (title bar only shows close button)
-        self.attributes('-toolwindow', 1)
+        window.attributes('-toolwindow', 1)
         # Create a frame for the form
-        form_frame = tk.Frame(self, padx=10, pady=10)
+        form_frame = tk.Frame(window, padx=10, pady=10)
         form_frame.pack()
-
+    
         # Control variables
-        self.algorithm1_var = tk.BooleanVar()
-        self.algorithm2_var = tk.BooleanVar()
-        self.algorithm3_var = tk.BooleanVar()
-        self.algorithm4_var = tk.BooleanVar()
-
+        algorithm1_var = tk.BooleanVar()
+        algorithm2_var = tk.BooleanVar()
+        algorithm3_var = tk.BooleanVar()
+        algorithm4_var = tk.BooleanVar()
+    
         # Labels
-        self.algorithm1_label = tk.Label(form_frame, text="HSV (Hue-Saturation-Value")
-        self.algorithm1_label.grid(row=0, column=0, sticky="w",pady=2)
-       
-        self.algorithm2_label = tk.Label(form_frame, text="YCbCr")
-        self.algorithm2_label.grid(row=1, column=0, sticky="w",pady=2)
-       
-        self.algorithm3_label = tk.Label(form_frame, text="YIQ")
-        self.algorithm3_label.grid(row=2, column=0, sticky="w",pady=2) 
-        
-        self.algorithm4_label = tk.Label(form_frame, text="YUV")
-        self.algorithm4_label.grid(row=3, column=0, sticky="w",pady=2)
-        
+        label_texts = [
+            "HSV (Hue-Saturation-Value)",
+            "YCbCr",
+            "YIQ",
+            "YUV"
+        ]
+        row_positions = [0,1,2,3]        
+        definition_of_labels_type_1 ("form_frame",label_texts,row_positions,form_frame,0)
+    
         # Checkboxes
-        self.algorithm1_checkbox = tk.Checkbutton(form_frame, variable=self.algorithm1_var)
-        self.algorithm1_checkbox.grid(row=0, column=1, sticky="e")
+        algorithm1_checkbox = tk.Checkbutton(form_frame, variable=algorithm1_var)
+        algorithm1_checkbox.grid(row=0, column=1, sticky="e")
         
-        self.algorithm2_checkbox = tk.Checkbutton(form_frame, variable=self.algorithm2_var)
-        self.algorithm2_checkbox.grid(row=1, column=1, sticky="e")       
+        algorithm2_checkbox = tk.Checkbutton(form_frame, variable=algorithm2_var)
+        algorithm2_checkbox.grid(row=1, column=1, sticky="e")       
         
-        self.algorithm3_checkbox = tk.Checkbutton(form_frame, variable=self.algorithm3_var)
-        self.algorithm3_checkbox.grid(row=2, column=1, sticky="e")       
+        algorithm3_checkbox = tk.Checkbutton(form_frame, variable=algorithm3_var)
+        algorithm3_checkbox.grid(row=2, column=1, sticky="e")       
         
-        self.algorithm4_checkbox = tk.Checkbutton(form_frame, variable=self.algorithm4_var)
-        self.algorithm4_checkbox.grid(row=3, column=1, sticky="e")        
+        algorithm4_checkbox = tk.Checkbutton(form_frame, variable=algorithm4_var)
+        algorithm4_checkbox.grid(row=3, column=1, sticky="e")        
         
-        # Buttons       
-        self.run_button = tk.Button(form_frame, text="OK", command=self.run_algorithms,width=10)
-        self.cancel_button = tk.Button(form_frame, text="Cancel", command=self.destroy,width=10)
-        self.run_button.grid(row=4, column=1, sticky="e",padx=100)
-        self.cancel_button.grid(row=4, column=1, sticky="e")        
-
-        
-    def run_algorithms(self):
-        selected_algorithms = []
-       
-     
-        if self.algorithm1_var.get():
-            selected_algorithms.append("HSV")
-        
-        if self.algorithm2_var.get():
-            selected_algorithms.append("YCbCr")
-        
-        if self.algorithm3_var.get():
-            selected_algorithms.append("YIQ")
+        # Buttons
+        _=definition_run_cancel_buttons_type_1("form_frame",
+                                     [lambda:run_algorithm_1(self,bool(algorithm1_var.get()),bool(algorithm2_var.get()),bool(algorithm3_var.get()),bool(algorithm4_var.get())),lambda:destroy(self)],
+                                     4,
+                                     form_frame,
+                                     1
+                                     )
             
-        if self.algorithm4_var.get():
-            selected_algorithms.append("YUV") 
-       #Get data
-        CC = pycc.GetInstance()  
-        type_data, number= get_istance()
-        if type_data=='folder':
-           entities = CC.getSelectedEntities()[0]
-           ## LOOP OVER EACH ELEMENT
-           for i in range(number):
-               pc = entities.getChild(i)  
-               pcd=P2p_getdata(pc,False, True, True) 
-               self.color_conversion(selected_algorithms,pc,pcd)  
+        def run_algorithm_1(self,hsv,ycbcr,yiq,yuv):
+            
+            ## CONTROL THE SELECTION OF THE INPUT
+            CC = pycc.GetInstance() 
+            if not CC.haveSelection():
+                raise RuntimeError("No folder or point cloud has been selected")
+                
+            selected_algorithms = []
+
+            if hsv:
+                selected_algorithms.append("HSV")
+            
+            if ycbcr:
+                selected_algorithms.append("YCbCr")
+            
+            if yiq:
+                selected_algorithms.append("YIQ")
+                
+            if yuv:
+                selected_algorithms.append("YUV") 
+           #Get data
+            CC = pycc.GetInstance()  
+            type_data, number= get_istance()
+            if type_data=='folder':
+               entities = CC.getSelectedEntities()[0]
+               ## LOOP OVER EACH ELEMENT
+               for i in range(number):
+                   pc = entities.getChild(i)  
+                   pcd=P2p_getdata(pc,False, True, True) 
+                   print(pcd.columns)
+                   self.color_conversion(selected_algorithms,pc,pcd)  
+                   CC.addToDB(pc)
+                   CC.updateUI() 
+            elif type_data=='point_cloud':
+               entities = CC.getSelectedEntities()
+               pc = entities[0]
+               pcd=P2p_getdata(pc,False, True, True)
+               print(pcd.columns)
+               self.color_conversion(selected_algorithms,pc,pcd)
                CC.addToDB(pc)
-               CC.updateUI() 
-        elif type_data=='point_cloud':
-           entities = CC.getSelectedEntities()
-           pc = entities[0]
-           pcd=P2p_getdata(pc,False, True, True)
-           self.color_conversion(selected_algorithms,pc,pcd)
-           CC.addToDB(pc)
-           CC.updateUI()            
-
-
-        print('The color scales has been added to the scalar fields of the point cloud')  
-        self.destroy()  # Close the window
+               CC.updateUI()            
+    
+    
+            print('The color scales has been added to the scalar fields of the point cloud')  
+            self.destroy()  # Close the window
         
     def show_frame(self,window):
         self.main_frame(window)

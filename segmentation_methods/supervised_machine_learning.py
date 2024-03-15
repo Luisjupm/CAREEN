@@ -16,6 +16,7 @@ from tkinter import messagebox
 from tkinter import filedialog
 import traceback
 import pandas as pd
+import time
 
 #CloudCompare Python Plugin
 import cccorelib
@@ -642,10 +643,17 @@ class GUI_mls(tk.Frame):
             
             # Transform the point cloud into a dataframe and select only the interseting columns
             feature_selection_pcd=P2p_getdata(pc_training,False,True,True)
+
+            # # Save the point cloud
+            # feature_selection_pcd[self.features2include].to_csv(os.path.join(self.output_directory, 'input_features.txt'),sep=' ',header=True,index=False)
             
-            # Save the point cloud with the features selected
-            input_path_point_cloud=os.path.join(self.output_directory,"input_point_cloud.txt")
-            feature_selection_pcd[self.features2include].to_csv(input_path_point_cloud,sep=' ',header=True,index=False)
+            # Add the 'Classification' column to features2include
+            features_to_save = self.features2include.copy()
+            if 'Classification' not in features_to_save:
+                features_to_save.append('Classification')
+            
+            # Save the point cloud
+            feature_selection_pcd[features_to_save].to_csv(os.path.join(self.output_directory, 'input_features.txt'), sep=' ', header=True, index=False)
             
             # Save the selectors of the optimal flow algorithm             
             selected_items = [self.set_up_parameters_of["selectors"][i] for i in selected_indices]
@@ -655,7 +663,7 @@ class GUI_mls(tk.Frame):
             # YAML file
             yaml_of = {
                 'ALGORITHM': "Optimal-flow",
-                'INPUT_POINT_CLOUD': input_path_point_cloud,                
+                'INPUT_POINT_CLOUD': os.path.join(self.output_directory,'input_features.txt'),               
                 'SELECTORS_FILE': os.path.join(self.output_directory,'selected_params.txt'),
                 'OUTPUT_DIRECTORY': self.output_directory,
                 'CONFIGURATION': {
@@ -670,8 +678,26 @@ class GUI_mls(tk.Frame):
             # RUN THE COMMAND LINE      
             command = path_optimal_flow + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
             print (command)
+            os.chdir(os.path.dirname(os.path.abspath(__file__)))
             os.system(command)
-            print("The process has been finished") 
+            os.chdir(current_directory)
+            
+            def read_features_and_print():
+                features_file = os.path.join(self.output_directory, "features.txt")
+            
+                # Esperar hasta que el archivo exista
+                while not os.path.exists(features_file):
+                    time.sleep(1)  # Esperar 1 segundo antes de volver a verificar
+            
+                # Leer y imprimir las características seleccionadas
+                with open(features_file, "r") as file:
+                    features = file.read()
+            
+                print("Best features selected:", features)
+                print("The process has been finished")    
+            
+            read_features_and_print()
+
         # To run the machine learning segmentation
         def run_algorithm_2 (self,algo,pc_training_name,pc_testing_name):
             # Check if the selection is a point cloud
@@ -813,25 +839,25 @@ class GUI_mls(tk.Frame):
             print (command)
             os.system(command)    
 
-
             # CREATE THE RESULTING POINT CLOUD 
             # Load the predictions
             pcd_prediction = pd.read_csv(os.path.join(self.output_directory,'predictions.txt'), sep=',')  # Use sep='\t' for tab-separated files       
             # # Select only the 'Predictions' column
             pc_results_prediction = pycc.ccPointCloud(pcd_prediction['X'], pcd_prediction['Y'], pcd_prediction['Z'])
             pc_results_prediction.setName("Results_from_segmentation")
-            idx = pc_results_prediction.addScalarField("Labels",pcd_prediction['Predictions']) 
+            idx = pc_results_prediction.addScalarField("Classification",pcd_prediction['Predictions']) 
             # STORE IN THE DATABASE OF CLOUDCOMPARE
             CC = pycc.GetInstance()
             CC.addToDB(pc_results_prediction)
-            CC.updateUI() 
+            pc_results_prediction.setCurrentDisplayedScalarField(idx)
+            pc_results_prediction.getScalarField(pc_results_prediction.getScalarFieldIndexByName("Classification")).computeMinAndMax()
+            CC.updateUI()
             root.destroy()
             # Revome files
             os.remove(os.path.join(self.output_directory, 'input_point_cloud_training.txt'))
             os.remove(os.path.join(self.output_directory, 'input_point_cloud_testing.txt'))
             print("The process has been finished")    
-            
-        #To run the prediction of machine learning
+                    #To run the prediction of machine learning
         def run_algorithm_3 (self,pc_prediction_name,path_features,path_pickle):
             
             # Check if the selection is a point cloud
@@ -869,11 +895,13 @@ class GUI_mls(tk.Frame):
             # Select only the 'Predictions' column
             pc_results_prediction = pycc.ccPointCloud(pcd_prediction['X'], pcd_prediction['Y'], pcd_prediction['Z'])
             pc_results_prediction.setName("Results_from_segmentation")
-            idx = pc_results_prediction.addScalarField("Labels",pcd_prediction['Predictions']) 
+            idx = pc_results_prediction.addScalarField("Classification",pcd_prediction['Predictions']) 
             
             # STORE IN THE DATABASE OF CLOUDCOMPARE
             CC = pycc.GetInstance()
             CC.addToDB(pc_results_prediction)
+            pc_results_prediction.setCurrentDisplayedScalarField(idx)
+            pc_results_prediction.getScalarField(pc_results_prediction.getScalarFieldIndexByName("Classification")).computeMinAndMax()
             CC.updateUI() 
             root.destroy()
             

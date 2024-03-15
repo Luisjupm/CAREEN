@@ -72,21 +72,21 @@ class GUI_mlu(tk.Frame):
         }
         # Hierarchical clustering   
         self.set_up_parameters_hc= {
-            "clusters": 2,
-            "mcdbi": "euclidean",
-            "mcdbi2": None,
-            "criterion": "ward",
+            "n_clusters": 2,
+            "metric": "euclidean",
+            "compute_full_tree": "auto",
+            "linkage": "ward",
             "ldt": 0.1,
-            "dist_clusters": False,
+            "dist_clusters": "false",
         }           
         #DBSCAN
         self.set_up_parameters_dbscan= {
-            "clusters": 5,
-            "min_samples": 200,
+            "epsilon": 0.5,
+            "min_samples": 5,
         }
         #OPTICS
         self.set_up_parameters_optics= {
-            "n_samples": 5,
+            "min_samples": 5,
             "epsilon": 200,
             "dist_computation": "minkowski",
             "extraction_method": "xi",
@@ -161,7 +161,7 @@ class GUI_mlu(tk.Frame):
                 self.set_up_parameters_hc ["dist_clusters"]=params[5]
                 
             elif algo=="DBSCAN":
-                self.set_up_parameters_dbscan["clusters"]=params[0]
+                self.set_up_parameters_dbscan["epsilon"]=params[0]
                 self.set_up_parameters_dbscan["min_samples"]=params[1]
                 
             elif algo== "OPTICS":
@@ -193,7 +193,7 @@ class GUI_mlu(tk.Frame):
                 elif algo=="Fuzzy-K-means":
                     save_setup_parameters(self,algo, int(entry_param1_fkm.get()), int(entry_param2_fkm.get()))
                 elif algo=="Hierarchical-clustering":
-                    save_setup_parameters(self,algo, int(entry_param1_hc.get()), str(entry_param2_hc.get()),str(entry_param3_hc.get()),str(entry_param4_hc.get()),float(entry_param5_hc.get()),entry_param6_hc.get(),"auto")                         
+                    save_setup_parameters(self,algo, int(entry_param1_hc.get()), str(entry_param2_hc.get()),str(entry_param3_hc.get()), str(entry_param4_hc.get()),float(entry_param5_hc.get()),bool(entry_param6_hc.get()))                         
                 elif algo=="DBSCAN":
                     save_setup_parameters(self,algo, float(entry_param1_dbscan.get()), int(entry_param2_dbscan.get()))
                 elif algo=="OPTICS":
@@ -238,21 +238,6 @@ class GUI_mlu(tk.Frame):
 
                
             if algo=="K-means":
-                
-                #Labels        
-                label_texts = [
-                    "Number of clusters:",
-                    "Number of iterations:"
-                ]
-                row_positions = [0,1]        
-                definition_of_labels_type_1 ("km",label_texts,row_positions,set_up_window,0)
-                
-                label_texts = [
-                    "Maximum number of clusters:",
-                    "Minimum number of clusters:"
-                ]
-                row_positions = [4,5]        
-                definition_of_labels_type_1 ("km",label_texts,row_positions,set_up_window,0,disable_labels=True)
                 # Labels            
                 label_param1_km = tk.Label(set_up_window, text="Number of clusters:")
                 label_param1_km.grid(row=0, column=0, sticky=tk.W)
@@ -349,22 +334,22 @@ class GUI_mlu(tk.Frame):
                 label_param1_hc = tk.Label(set_up_window, text="Number of clusters:")
                 label_param1_hc.grid(row=0, column=0, sticky=tk.W)            
                 entry_param1_hc = tk.Entry(set_up_window)
-                entry_param1_hc.insert(0,self.set_up_parameters_hc["clusters"])
+                entry_param1_hc.insert(0,self.set_up_parameters_hc["n_clusters"])
                 entry_param1_hc.grid(row=0, column=1)
                 
                 label_param2_hc = tk.Label(set_up_window, text="Metric for calculating the distance between istances:")
                 label_param2_hc.grid(row=1, column=0, sticky=tk.W)            
-                features_param2_hc = ["euclidean", "cityblock","cosine","l1","l2","manhattan"]
+                features_param2_hc = ["None","euclidean","l1","l2","manhattan","cosine"]
                 entry_param2_hc = ttk.Combobox(set_up_window,values=features_param2_hc, state="readonly")
                 entry_param2_hc.current(0) 
-                entry_param2_hc.grid(row=1, column=1) 
+                entry_param2_hc.grid(row=1, column=1)
                 
-                label_param3_hc = tk.Label(set_up_window, text="Metric for calculating the distance between istances:")
-                label_param3_hc.grid(row=2, column=0, sticky=tk.W)            
-                features_param3_hc = ["none","euclidean","l1","l2","manhattan","cosine"]
+                label_param3_hc = tk.Label(set_up_window, text="Stop early the construction of the tree:")
+                label_param3_hc.grid(row=2, column=0, sticky=tk.W)
+                features_param3_hc = ["auto","true","false"]
                 entry_param3_hc = ttk.Combobox(set_up_window,values=features_param3_hc, state="readonly")
                 entry_param3_hc.current(0) 
-                entry_param3_hc.grid(row=2, column=1)        
+                entry_param3_hc.grid(row=2, column=1)   
                 
                 label_param4_hc = tk.Label(set_up_window, text="Linkage criterion:")
                 label_param4_hc.grid(row=3, column=0, sticky=tk.W)            
@@ -395,7 +380,7 @@ class GUI_mlu(tk.Frame):
                 label_param1_dbscan.grid(row=0, column=0, sticky=tk.W)
                 
                 entry_param1_dbscan = tk.Entry(set_up_window)
-                entry_param1_dbscan.insert(0,self.set_up_parameters_dbscan["clusters"])
+                entry_param1_dbscan.insert(0,self.set_up_parameters_dbscan["epsilon"])
                 entry_param1_dbscan.grid(row=0, column=1)
                 
                 label_param2_dbscan = tk.Label(set_up_window, text="Minimum number of points to create a cluster:")
@@ -412,7 +397,7 @@ class GUI_mlu(tk.Frame):
                 label_param1_optics.grid(row=0, column=0, sticky=tk.W)
                 
                 entry_param1_optics = tk.Entry(set_up_window)
-                entry_param1_optics.insert(0,self.set_up_parameters_optics["n_samples"])
+                entry_param1_optics.insert(0,self.set_up_parameters_optics["min_samples"])
                 entry_param1_optics.grid(row=0, column=1)
                 
                 label_param2_optics = tk.Label(set_up_window, text="Epsilon (maximum distance between poins of a cluster):")
@@ -512,7 +497,7 @@ class GUI_mlu(tk.Frame):
         _=definition_of_buttons_type_1("tab2",
                                        button_names,
                                        row_buttons,
-                                       [lambda: show_set_up_window(self,t1_combo_algo.get()),lambda: show_features_window(self,name_list,t1_combo_point_cloud.get()),lambda:save_file_dialog(2)],
+                                       [lambda: show_set_up_window(self,t1_combo_algo.get()),lambda: show_features_window(self,name_list,t1_combo_point_cloud.get()),lambda:save_file_dialog(1)],
                                        tab1,
                                        2
                                        ) 
@@ -542,17 +527,17 @@ class GUI_mlu(tk.Frame):
         t2_combo_point_cloud.set("Not selected")
         
         # Button
-        t2_entry_widget = ttk.Entry(tab1, width=30)
+        t2_entry_widget = ttk.Entry(tab2, width=30)
         t2_entry_widget.grid(row=3, column=1, sticky="e", pady=2)
         t2_entry_widget.insert(0, self.file_path)
         
         # Buttons
-        row_buttons=[1,2]  
-        button_names=["...","..."]  
+        row_buttons=[1,2,3]  
+        button_names=["...","...","..."]  
         _=definition_of_buttons_type_1("tab2",
                                        button_names,
                                        row_buttons,
-                                       [lambda: load_features_dialog(),lambda: load_configuration_dialog(),lambda:save_file_dialog(3)],
+                                       [lambda: load_features_dialog(),lambda: load_configuration_dialog(),lambda: save_file_dialog(2)],
                                        tab2,
                                        2 ) 
         
@@ -632,10 +617,10 @@ class GUI_mlu(tk.Frame):
                     'ALGORITHM': "Hierarchical-clustering",
                     'CONFIGURATION': 
                         {
-                        'clusters': self.set_up_parameters_hc["clusters"],
-                        'mcdbi': self.set_up_parameters_hc["mcdbi"],
-                        'mcdbi2': self.set_up_parameters_hc["mcdbi2"],
-                        'criterion': self.set_up_parameters_hc["criterion"],
+                        'n_clusters': self.set_up_parameters_hc["n_clusters"],
+                        'metric': self.set_up_parameters_hc["metric"],
+                        'compute_full_tree': self.set_up_parameters_hc["compute_full_tree"],
+                        'linkage': self.set_up_parameters_hc["linkage"],
                         'ldt': self.set_up_parameters_hc["ldt"],
                         'dist_clusters': self.set_up_parameters_hc["dist_clusters"],
                         }
@@ -653,8 +638,8 @@ class GUI_mlu(tk.Frame):
                     'ALGORITHM': "DBSCAN",
                     'CONFIGURATION': 
                         {
-                        'clusters': self.set_up_parameters_fkm["clusters"],
-                        'min_samples': self.set_up_parameters_fkm["min_samples"]
+                        'epsilon': self.set_up_parameters_dbscan["epsilon"],
+                        'min_samples': self.set_up_parameters_dbscan["min_samples"]
                         }
                 }                          
                 write_yaml_file (self.output_directory,yaml)
@@ -670,19 +655,21 @@ class GUI_mlu(tk.Frame):
                     'ALGORITHM': "OPTICS",
                     'CONFIGURATION': 
                         {
-                        'n_samples': self.set_up_parameters_hc["n_samples"],
-                        'epsilon': self.set_up_parameters_hc["epsilon"],
-                        'dist_computation': self.set_up_parameters_hc["dist_computation"],
-                        'extraction_method': self.set_up_parameters_hc["extraction_method"],
-                        'min_steepness': self.set_up_parameters_hc["min_steepness"],
-                        'min_cluster_size': self.set_up_parameters_hc["min_cluster_size"],
+                        'min_samples': self.set_up_parameters_optics["min_samples"],
+                        'epsilon': self.set_up_parameters_optics["epsilon"],
+                        'dist_computation': self.set_up_parameters_optics["dist_computation"],
+                        'extraction_method': self.set_up_parameters_optics["extraction_method"],
+                        'min_steepness': self.set_up_parameters_optics["min_steepness"],
+                        'min_cluster_size': self.set_up_parameters_optics["min_cluster_size"],
                         }
                 }                    
                 write_yaml_file (self.output_directory,yaml)
                 command = path_optics + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
 
             # RUN THE COMMAND LINE
-            os.system(command)    
+            print(command)
+            os.system(command)
+            
 
             # CREATE THE RESULTING POINT CLOUD 
             # Load the predictions
@@ -694,6 +681,8 @@ class GUI_mlu(tk.Frame):
             # STORE IN THE DATABASE OF CLOUDCOMPARE
             CC = pycc.GetInstance()
             CC.addToDB(pc_results_prediction)
+            pc_results_prediction.setCurrentDisplayedScalarField(idx)
+            pc_results_prediction.getScalarField(pc_results_prediction.getScalarFieldIndexByName("Clusters")).computeMinAndMax()
             CC.updateUI() 
             root.destroy()
             # Revome files
@@ -731,25 +720,27 @@ class GUI_mlu(tk.Frame):
             # os.system(command)
             print(command)
             
-            # # CREATE THE RESULTING POINT CLOUD 
-            # # Load the predictions
-            # pcd_prediction = pd.read_csv(os.path.join(self.output_directory,'predictions.txt'), sep=',')  # Use sep='\t' for tab-separated files       
+            # CREATE THE RESULTING POINT CLOUD 
+            # Load the predictions
+            pcd_prediction = pd.read_csv(os.path.join(self.output_directory,'predictions.txt'), sep=',')  # Use sep='\t' for tab-separated files       
 
-            # # Select only the 'Predictions' column
-            # pc_results_prediction = pycc.ccPointCloud(pcd_prediction['X'], pcd_prediction['Y'], pcd_prediction['Z'])
-            # pc_results_prediction.setName("Results_from_clustering")
-            # idx = pc_results_prediction.addScalarField("Clusters",pcd_prediction['Predictions']) 
+            # Select only the 'Predictions' column
+            pc_results_prediction = pycc.ccPointCloud(pcd_prediction['X'], pcd_prediction['Y'], pcd_prediction['Z'])
+            pc_results_prediction.setName("Results_from_clustering")
+            idx = pc_results_prediction.addScalarField("Clusters",pcd_prediction['Predictions']) 
             
-            # # STORE IN THE DATABASE OF CLOUDCOMPARE
-            # CC = pycc.GetInstance()
-            # CC.addToDB(pc_results_prediction)
-            # CC.updateUI() 
-            # root.destroy()
+            # STORE IN THE DATABASE OF CLOUDCOMPARE
+            CC = pycc.GetInstance()
+            CC.addToDB(pc_results_prediction)
+            pc_results_prediction.setCurrentDisplayedScalarField(idx)
+            pc_results_prediction.getScalarField(pc_results_prediction.getScalarFieldIndexByName("Clusters")).computeMinAndMax()
+            CC.updateUI() 
+            root.destroy()
             
-            # # Revome files
-            # os.remove(os.path.join(self.output_directory, 'input_point_cloud_prediction.txt'))
-            # os.remove(os.path.join(self.output_directory,'algorithm_configuration.yaml'))
-            # print("The process has been finished")
+            # Revome files
+            os.remove(os.path.join(self.output_directory, 'input_point_cloud_prediction.txt'))
+            os.remove(os.path.join(self.output_directory,'algorithm_configuration.yaml'))
+            print("The process has been finished")
             
     def show_frame(self,root):
         self.main_frame(root)

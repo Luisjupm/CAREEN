@@ -38,6 +38,8 @@ from main import P2p_getdata,get_istance,extract_longitudinal_axis, minBoundingR
 from main_gui import show_features_window, definition_of_labels_type_1,definition_of_entries_type_1, definition_of_combobox_type_1,definition_ok_cancel_buttons_type_1,definition_run_cancel_buttons_type_1, definition_of_buttons_type_1
 from ransac import RANSAC
 
+#%% ARCH ESTIMATION FUNCTION
+
 def arch_estimation(i,pcd,type_of_arch,thickness,num_iter_ransac,threshold_ransac,d_min,fixed_springs,percent,load_pc_section,save_path): 
     # Possible issues with input variables
     if percent >100:
@@ -306,13 +308,6 @@ class GUI_arches(tk.Frame):
             
             print('The process has been completed!')  
             window.destroy()  # Close the window
-        
-    def show_frame(self,window):
-        self.main_frame(window)
-        self.grid(row=1, column=0, pady=10)
-
-    def hide_frame(self):
-        self.grid_forget()
    
 
 #%% START THE GUI

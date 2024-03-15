@@ -22,7 +22,7 @@ POINT_TRANSFORMER: 'point-transformer/mvc.exe'
 JAKTERISTICS: 'jakteristics-0.6.0/jakteristics-0.6.0.exe'  
 
 # OTHER METHODS
-ANISOTROPIC_DENOISING: 'Anisotropic_denoising-1.0.4/Anisotropic_denoising-1.0.4.exe'
+ANISOTROPIC_DENOISING: 'anisotropic_denoising-1.0.4/anisotropic_denoising-1.0.4.exe'
 POTREE_CONVERTER: 'potree-2.1.1/PotreeConverter.exe'
 
 

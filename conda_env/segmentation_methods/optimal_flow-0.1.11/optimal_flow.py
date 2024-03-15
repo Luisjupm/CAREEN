@@ -38,7 +38,7 @@ def main():
     print("Features chosen = " + str(features))
     # cross_val=args.cv
     print("Value chosen for cross validation = " + str(cross_val))
-    
+            
     # Read the input file and prepare them. We delete the X,Y,Z and Classification from the features as well as the column of classification from the input point cloud
     tr = pd.read_csv(input_file,delimiter=' ')
     tr_features_copy=tr
@@ -51,27 +51,28 @@ def main():
     
     # Check if any missing values exist in the DataFrame
     if tr_features_clean.any().any():
-         # Clean the dataframe, and drop all the line that contains a NaN (Not a Number) value.
-         tr_features_filled=tr_features_clean.ffill()         
-         def missing_values_checker():
+          # Clean the dataframe, and drop all the line that contains a NaN (Not a Number) value.
+          tr_features_filled=tr_features_clean.ffill()         
+          def missing_values_checker():
             # Check for missing values
             missing_values = tr_features_filled.isnull()
             # To count the total number of missing values in the DataFrame
             total_missing_count = missing_values.sum().sum()
-         missing_values_checker()
+          missing_values_checker()
          
     #Creates an Array from labels
     tr_labels=tr_labels_clean.values
     tr_labels_2d = tr_labels.ravel()
     
-    # REad the selectors
+    # Read the selectors
     # Open the file in read mode
     with open(selectors, 'r') as file:
         # Read all lines in the file and strip newline characters
         selectors_list = [line.strip() for line in file]
+        print(selectors_list)
     # Run optimalflow
     reg_fs_demo = dynaFS_clf(
-                            # custom_selectors=selectors_list,
+                            custom_selectors=selectors_list,
                             fs_num = int(features), 
                             random_state = None, 
                             cv = int(cross_val), 
@@ -79,12 +80,13 @@ def main():
                             )
 
     features_selected=reg_fs_demo.fit(tr_features_filled,tr_labels_2d)
-
-    # Export the results
-    # Open the file in write mode
+            
     with open(os.path.join(output_directory, "features.txt"), "w") as file:
-        # Write the list elements to the file
-        for item in features_selected:
+    # Write the list elements to the file separated by commas
+        for index, item in enumerate(features_selected[1]):
+            # Check if it's not the first item, then add a comma
+            if index != 0:
+                file.write(",")
             file.write(str(item))
             
 if __name__=='__main__':

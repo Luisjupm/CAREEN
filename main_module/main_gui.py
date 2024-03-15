@@ -24,6 +24,11 @@ additional_modules_directory=os.path.sep.join(path_parts[:-2])+ '\main_module'
 
 sys.path.insert(0, additional_modules_directory)
 from main import P2p_getdata,get_istance,get_point_clouds_name
+
+#%% ADD ICON
+current_directory= os.path.dirname(os.path.abspath(__file__))
+path_icon_ico= os.path.join(current_directory,'..','assets',r"logo.ico")
+
 #%% FUNCTIONS
 
 def show_features_window(self,name_list,training_pc_name="Not selected",excluded_feature="Classification", single_selection_mode=False):
@@ -130,6 +135,7 @@ def show_features_window(self,name_list,training_pc_name="Not selected",excluded
     #GUI
     feature_window = tk.Toplevel()
     feature_window.title("Features of the point cloud")
+    feature_window.iconbitmap(path_icon_ico)
     feature_window.resizable (False, False) 
     # Set up the protocol for the window close button (the "X" button)
     feature_window.protocol("WM_DELETE_WINDOW", ok_features_window)
@@ -446,4 +452,4 @@ def definition_of_buttons_type_2 (header, button_texts, command_list, window):
         button_name = f"{header}_button_{row_idx}"
         command = command_list[row_idx] if row_idx < len(command_list) else None
         button = tk.Button(window, name=button_name, text=button_text, command=command)
-        button.pack(side="top")    
+        button.pack(side="top")

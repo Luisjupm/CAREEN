@@ -61,27 +61,53 @@ def main():
         config_data = yaml.full_load(yaml_file)
     algo =  config_data.get('ALGORITHM')
     output_directory= config_data.get('OUTPUT_DIRECTORY')
-    if algo=='Prediction':
+    if algo=="Prediction":
         
         input_file= config_data.get('INPUT_POINT_CLOUD')
-        features2include= config_data['CONFIGURATION']['f']   
+        features2include_path= config_data['CONFIGURATION']['f']   
         pkl_file=config_data['CONFIGURATION']['p']    
         
         print("The input file is taken from " + str(input_file))  
-        print("The features are taken from " + str(features2include)) 
+        print("The features are taken from " + str(features2include_path)) 
         print("The pkl file is taken from " + str(pkl_file)) 
         print("Output directory is " + str(output_directory))
         
         # Store in a Pandas dataframe the content of the file
-        pcd_testing=pd.read_csv(input_file,delimiter=' ')
-        with open(features2include, "r") as file:
+        pcd=pd.read_csv(input_file,delimiter=' ')
+        pcd.dropna(inplace=True)
+        labels2include=['Classification']
+        labels_prediction=pcd[labels2include]
+        with open(features2include_path, "r") as file:
             f2i = [line.strip().split(',') for line in file]    
-        X_test= pcd_testing[f2i[0]].ffill()
+        X_test=pcd[f2i[0]].ffill()
+        # Load the pickled model
+        loaded_model = joblib.load(pkl_file)
+        # # Assuming 'new_data' contains the data you want to predict on
+        y_pred = loaded_model.predict(X_test)
         
-        # Load the model from the file
-        model = joblib.load(pkl_file)
+        pcd_testing_subset = pcd[['X', 'Y', 'Z']].copy()
+        pcd_testing_subset['Predictions'] = y_pred
+        # Saving the DataFrame to a CSV file
+        pcd_testing_subset.to_csv(os.path.join(output_directory, 'predictions.txt'), index=False)
         
-    elif algo in ['K-means','Fuzzy-K-means']:
+        y_test=labels_prediction.to_numpy()
+        
+        #%% CREATION OF THE CLASSIFICATION REPORT
+        
+        report=classification_report(y_test, y_pred)
+            # Write the report to a file
+        with open(os.path.join(output_directory,'classification_report.txt'), 'w') as file:
+            file.write(report)
+        
+        #%% CREATION OF THE CONFUSION MATRIX
+        
+        cm= ConfusionMatrix(loaded_model, cmap='Blues')
+        cm.score (X_test,y_test)
+        cm.show(outpath=os.path.join(output_directory, 'confusion_matrix.png'))  # Save the confusion matrix to a file        
+        plt.close()  # Close the plot 
+
+        
+    elif algo in ["K-means","Fuzzy-K-means"]:
         
         # Read the neccesary information from the YAML file
         train_file= config_data.get('INPUT_POINT_CLOUD_TRAINING')
@@ -109,7 +135,7 @@ def main():
         X_train=features_training
         y_train=labels_training.to_numpy()
         
-    elif algo in ['Hierarchical_clustering','DBSCAN','OPTICS']:
+    elif algo in ["Hierarchical-clustering","DBSCAN","OPTICS"]:
         
         # Read the neccesary information from the YAML file
         train_file= config_data.get('INPUT_POINT_CLOUD_TRAINING')
@@ -411,8 +437,8 @@ def main():
         print("Output directory is " + output_directory)        
         print("Features to include = " + features2include_path)
         print("Optimization strategy = " + str(optimization_strategy))
-        print("Number of clusters = " + str(clusters))
-        print("Number of iterations = " + str(iterations))
+        print("Number of clusters = " + int(clusters))
+        print("Number of iterations = " + int(iterations))
         
     
         if optimization_strategy[0] != 0: # We want an optimization of clusters
@@ -515,8 +541,8 @@ def main():
         print("Output directory is " + output_directory)        
         print("Features to include = " + features2include_path)
         print("Optimization strategy = " + str(optimization_strategy))
-        print("Number of clusters = " + str(clusters))
-        print("Number of iterations = " + str(iterations))
+        print("Number of clusters = " + int(clusters))
+        print("Number of iterations = " + int(iterations))
         
         if optimization_strategy[0] != 0: # We want an optimization of clusters
             # Choosing a range of K values for KMeans
@@ -606,66 +632,57 @@ def main():
         # Retrieve cluster labels
         y_pred = fcm.u.argmax(axis=1)
         config_algo=fcm
-        
-        
+
         
     elif algo=="Hierarchical-clustering":
-         
         
-        clusters=config_data['CONFIGURATION']['clusters']
-        mcdbi=config_data['CONFIGURATION']['mcdbi']
-        mcdbi2=config_data['CONFIGURATION']['mcdbi2']
-        criterion=config_data['CONFIGURATION']['criterion']
+        n_clusters=config_data['CONFIGURATION']['n_clusters']
+        metric=config_data['CONFIGURATION']['metric']
+        compute_full_tree=config_data['CONFIGURATION']['compute_full_tree']
+        linkage=config_data['CONFIGURATION']['linkage']
         ldt=config_data['CONFIGURATION']['ldt']
         dist_clusters=config_data['CONFIGURATION']['dist_clusters']
-        compute_full_tree=None
-        
+
         # Restrictions
-        
-        print("Train file located in " + train_file)        
-        print("Output directory is " + output_directory)        
+        print("Train file located in " + train_file)       
         print("Features to include = " + features2include_path)
-        print("Optimization strategy = " + optimization_strategy)
-        print("Number of clusters = " + str(clusters))
-        print("Metric for calculating the distance between istances = " + mcdbi)
-        print("Metric for calculating the distance between istances = " + mcdbi2)
-        print("Linkage criterion = " + criterion)
+        print("Number of clusters = " + str(n_clusters))
+        print("Metric used to compute the linkage = " + str(metric))
+        print("Compute distance between clusters = " + compute_full_tree)
+        print("Linkage criterion = " + linkage)
         print("Linkage distance threshold = " + str(ldt))
-        print("Compute distance between clusters = " + dist_clusters)
+        print("Stop early the construction of the tree = " + str(dist_clusters))
         
-        
-        temp_list=[clusters, mcdbi, mcdbi2, criterion, ldt, dist_clusters,compute_full_tree]
-        
-        if clusters == 0:
-            temp_list[0] = None
+        if n_clusters == 0:
+            metric = None
         else:
-            temp_list[4] = None
+            ldt = None
         
-        if criterion == "ward":
-            temp_list[1] = "euclidean"
-        
-        if mcdbi2 == "none" or criterion == "ward":
-            temp_list[2] = "euclidean"
+        if linkage == "ward":
+            metric = "euclidean"
         
         if ldt == 0:
-            temp_list[0] = None
-            temp_list[6] = True
+            ldt = None
         
-        if dist_clusters == 'true':
-            temp_list[5] = True
-        else:
-            temp_list[5] = False
-            
+        if not ldt == None:
+            n_clusters = None
+            compute_full_tree = True
             
         # Perform clustering
-        hc = AgglomerativeClustering(n_clusters=clusters, metric=mcdbi2,linkage=criterion,distance_threshold=ldt,compute_distances=dist_clusters,compute_full_tree=temp_list[6])
+        hc = AgglomerativeClustering(n_clusters=n_clusters,
+                                     metric=metric,
+                                     linkage=linkage,
+                                     distance_threshold=ldt,
+                                     compute_distances=dist_clusters,
+                                     compute_full_tree=compute_full_tree
+                                     )
         hc.fit(features_training)
         y_pred = hc.labels_
-        config_algo=hc
-        
+        config_algo=hc       
+            
     elif algo=="DBSCAN":
         
-        clusters=config_data['CONFIGURATION']['clusters']
+        epsilon=config_data['CONFIGURATION']['epsilon']
         min_samples=config_data['CONFIGURATION']['min_samples']
         
         # Restrictions
@@ -673,11 +690,10 @@ def main():
         print("Train file located in " + train_file)        
         print("Output directory is " + output_directory)        
         print("Features to include = " + features2include_path)
-        print("Optimization strategy = " + optimization_strategy)
-        print("Number of clusters = " + str(clusters))
+        print("Epsilon = " + str(epsilon))
         print("Minimun number of samples = " + str(min_samples))
         
-        dbscan = DBSCAN(eps=clusters,min_samples=min_samples)
+        dbscan = DBSCAN(eps=epsilon,min_samples=min_samples)
         dbscan.fit(features_training) 
         y_pred=dbscan.labels_
         config_algo=dbscan
@@ -696,11 +712,10 @@ def main():
         print("Train file located in " + train_file)        
         print("Output directory is " + output_directory)        
         print("Features to include = " + features2include_path)
-        print("Optimization strategy = " + optimization_strategy)
         print("Minimun number of samples = " + str(min_samples))
         print("Epsilon (maximum distance between poins of a cluster) = " + str(epsilon))
-        print("Metric for distance computation = " + dist_computation)
-        print("Extraction method = " + extraction_method)
+        print("Metric for distance computation = " + str(dist_computation))
+        print("Extraction method = " + str(extraction_method))
         print("Minimum steepness = " + str(min_steepness))
         print("Minimum cluster size = " + str(min_cluster_size))
  
@@ -779,7 +794,7 @@ def main():
         pcd_testing_subset.to_csv(os.path.join(output_directory, 'predictions.txt'), index=False)  
         
     
-    if algo in ['K-means','Fuzzy-K-means','Hierarchical_clustering','DBSCAN','OPTICS']:
+    if algo in ["K-means","Fuzzy-K-means","Hierarchical-clustering","DBSCAN","OPTICS"]:
         # SAVE THE CONFIGURATION FILE, THE FEATURES2INCLUDE FOR PREDICTION, THE SCATTER PLOTS OF EACH VARIABLE AND OTHER PLOTS SUCH AS DENDOGRAMS OR ELBOWGRAPHS AMONG OTHERS 
         with open(os.path.join(output_directory,'config.pkl'), 'wb') as file:
             pickle.dump(config_algo, file) 
@@ -827,7 +842,7 @@ def main():
                 # Plot the corresponding dendrogram
                 dendrogram(linkage_matrix, **kwargs)
             
-            if clusters==None: # print the dendogram if is possible. Number of cluster is not defined and the algorithm computes the full tree
+            if n_clusters==None: # print the dendogram if is possible. Number of cluster is not defined and the algorithm computes the full tree
                 plt.title("Hierarchical Clustering Dendrogram")
                 # plot the top three levels of the dendrogram
                 plot_dendrogram(hc, truncate_mode="level", p=3)
@@ -840,15 +855,12 @@ def main():
                 with open(os.path.join(output_directory,'dendogram_issue.txt'), "w") as file:
                     # Write the message to the file
                     file.write(message) 
-                    
-        #%% CREATION OF THE FINAL POINT CLOUD WITH THE PREDICTIONS FOR FURTHER LOADING
         
         pcd_testing_subset = pcd_training[['X', 'Y', 'Z']].copy()
         pcd_testing_subset['Predictions'] = y_pred
         # Saving the DataFrame to a CSV file
-        pcd_testing_subset.to_csv(os.path.join(output_directory, 'predictions.txt'), index=False)  
-            
-        
+        pcd_testing_subset.to_csv(os.path.join(output_directory, 'predictions.txt'), index=False)
+ 
     
 if __name__=='__main__':
 	main()

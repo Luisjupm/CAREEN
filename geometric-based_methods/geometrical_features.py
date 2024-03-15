@@ -17,9 +17,8 @@ from tkinter import messagebox
 from tkinter import filedialog
 import traceback
 import pandas as pd
-import laspy
 
-#CloudCompare Python Plugin
+# #CloudCompare Python Plugin
 import cccorelib
 import pycc
 
@@ -42,12 +41,6 @@ with open(config_file, 'r') as yaml_file:
     config_data = yaml.safe_load(yaml_file)
 path_jakteristics= os.path.join(current_directory,config_data['JAKTERISTICS'])
 
-
-
-
-
-
-
 #%% INITIAL OPERATIONS
 name_list=get_point_clouds_name()
 
@@ -59,7 +52,7 @@ class GUI_gf(tk.Frame):
         self.initial_params = [
             "Eigenvalues sum",
             "Omnivariance",
-            "Eigentropy",
+            "Eigenentropy",
             "Anisotropy",
             "Planarity",
             "Linearity",
@@ -135,7 +128,7 @@ class GUI_gf(tk.Frame):
         params = [
             "Eigenvalues sum",
             "Omnivariance",
-            "Eigentropy",
+            "Eigenentropy",
             "Anisotropy",
             "Planarity",
             "Linearity",
@@ -148,10 +141,6 @@ class GUI_gf(tk.Frame):
             "Ny",
             "Nz"
         ]
-        
-        # row_positions = [0,1,2,3,4,5,6,7,8,9,10,11,12,13]        
-        # definition_of_labels_type_1 ("form_frame",label_texts,row_positions,form_frame,1)
-        # definition_of_checkbutton_type_1("form_frame",label_texts,row_positions,form_frame,0)
         
         # Variables to store the state of checkbuttons
         vars_params = [tk.BooleanVar() for _ in range(len(self.initial_params))]
@@ -215,6 +204,10 @@ class GUI_gf(tk.Frame):
             else:
                 print("The features " + str(self.selected_params) + " have been included to be computed")
             
+            selected_features_lower = [feature.lower() for feature in self.selected_params]
+            
+            radius = [float(x) for x in radius.split()]
+            
             # Check if the selection is a point cloud
             pc_training=check_input(name_list,pc_training_name)
             
@@ -224,28 +217,17 @@ class GUI_gf(tk.Frame):
             # Save the point cloud with the features selected
             input_path_point_cloud=os.path.join(self.output_directory,"input_point_cloud.txt")
             
-            features_pcd.to_csv(input_path_point_cloud,sep=' ',header=True,index=False)
-            
-            input_path_las = os.path.join(self.output_directory, "input_point_cloud.las")
-            outfile = laspy.create(point_format=2, file_version="1.2", point_records=len(features_pcd))
-            
-            outfile.x = features_pcd['X']
-            outfile.y = features_pcd['Y']
-            outfile.z = features_pcd['Z']
-            
-            outfile.close()
+            features_pcd[['X', 'Y', 'Z']].to_csv(input_path_point_cloud,sep=' ',header=True,index=False)
             
             # YAML file
             yaml = {
                 'ALGORITHM': "Jakterisitcs",
                 'INPUT_POINT_CLOUD': input_path_point_cloud,
-                'INPUT_LAS': input_path_las,
                 'OUTPUT_DIRECTORY': self.output_directory,
-                'INPUT_FEATURES': self.selected_params,
-                'SEARCH_RADIUS': radius,
-                # 'CONFIGURATION': {
-                #     'radius': self.parameters["radius"]
-                #     }
+                'CONFIGURATION': {
+                    'input_features': selected_features_lower,
+                    'radius': radius
+                    }
                 }
             
             write_yaml_file (self.output_directory,yaml)
@@ -253,54 +235,45 @@ class GUI_gf(tk.Frame):
             # RUN THE COMMAND LINE      
             command = path_jakteristics + ' --i ' + os.path.join(self.output_directory,'algorithm_configuration.yaml') + ' --o ' + self.output_directory
             print (command)
-            # os.system(command)
+            os.system(command)
             
-            # # CREATE THE RESULTING POINT CLOUD 
-            # # Load the point cloud
-            # pcd = pd.read_csv(os.path.join(self.output_directory,'input_point_cloud.txt'), sep=',')  # Use sep='\t' for tab-separated files       
-
-            # # Add Geometrical features as Scalar Fields
-            # pc_results = pycc.ccPointCloud(pcd['X'], pcd['Y'], pcd['Z'])
-            # pc_results.setName("PC_computed")
-                    
-            # param_to_field = {
-            #     "Eigenvalues sum": "Eigenvalues sum",
-            #     "Omnivariance": "Omnivariance",
-            #     "Eigentropy": "Eigentropy",
-            #     "Anisotropy": "Anisotropy",
-            #     "Planarity": "Planarity",
-            #     "Linearity": "Linearity",
-            #     "PCA1": "PCA1",
-            #     "PCA2": "PCA2",
-            #     "Surface Variation": "Surface Variation",
-            #     "Sphericity": "Sphericity",
-            #     "Verticality": "Verticality",
-            #     "Nx": "Nx",
-            #     "Ny": "Ny",
-            #     "Nz": "Nz"
-            # }
             
-            # for param in self.selected_params:
-            #     if param in param_to_field:
-            #         idx = pc_results.addScalarField("Labels", pcd[param_to_field[param]])
+            # CREATE THE RESULTING POINT CLOUD 
+            # Load the predictions
+            pcd_prediction = pd.read_csv(os.path.join(self.output_directory,'pc_computed.txt'), sep=' ')  # Use sep='\t' for tab-separated files  
             
-            # # STORE IN THE DATABASE OF CLOUDCOMPARE
-            # CC = pycc.GetInstance()
-            # CC.addToDB(pc_results)
-            # CC.updateUI() 
-            # window.destroy()
+            # EXTRACT COLUMN NAMES FOR SCALAR FIELDS
+            scalar_fields = list(pcd_prediction.columns[3:])  # Exclude first three columns (X, Y, Z)
             
-            # os.remove(os.path.join(self.output_directory, 'input_point_cloud.txt'))
+            # CREATE THE RESULTING POINT CLOUD 
+            pc_results_prediction = pycc.ccPointCloud(pcd_prediction['X'], pcd_prediction['Y'], pcd_prediction['Z'])
+            
+            # ADD SCALAR FIELDS
+            for field in scalar_fields:
+                idx = pc_results_prediction.addScalarField(field, pcd_prediction[field])
+                
+            CC = pycc.GetInstance()
+            CC.addToDB(pc_results_prediction)
+            
+            # SET CURRENT DISPLAYED SCALAR FIELD
+            pc_results_prediction.setCurrentDisplayedScalarField(3)  # Assuming the first scalar field index is 3
+            
+            # COMPUTE MIN AND MAX FOR SCALAR FIELDS
+            for field in scalar_fields:
+                idx = pc_results_prediction.getScalarFieldIndexByName(field)
+                pc_results_prediction.getScalarField(idx).computeMinAndMax()
+            
+            pc_results_prediction.setName("pc_computed")
+            
+            # STORE IN THE DATABASE OF CLOUDCOMPARE
+            CC = pycc.GetInstance()
+            CC.addToDB(pc_results_prediction)
+            CC.updateUI()
+            window.destroy()
+            # Revome files
+            os.remove(os.path.join(self.output_directory, 'input_point_cloud.txt'))
             
             print("The process has been finished")
-            
-            
-    def show_frame(self,window):
-        self.main_frame(window)
-        self.grid(row=1, column=0, pady=10)
-
-    def hide_frame(self):
-        self.grid_forget()
 
 
 #%% RUN THE GUI
